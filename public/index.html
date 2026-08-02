@@ -200,7 +200,13 @@ body.con-pedido .pie{padding-bottom:156px}
   font-size:.74rem;font-weight:300;line-height:1.7;opacity:.72;
 }
 .credito b{font-weight:500}
-.credito a{text-decoration:none;border-bottom:1px solid rgba(255,255,255,.4);white-space:nowrap}
+.credito a{
+  display:inline-flex;align-items:center;gap:5px;
+  text-decoration:none;white-space:nowrap;
+  background:rgba(255,255,255,.14);padding:3px 11px 3px 8px;border-radius:999px;
+}
+.credito a:hover{background:rgba(255,255,255,.26)}
+.credito a svg{width:14px;height:14px;flex:0 0 auto;opacity:.9}
 
 /* ---------- pedido ---------- */
 .flotante{
@@ -350,7 +356,11 @@ body.con-pedido .pie{padding-bottom:156px}
   <small id="pie-nota"></small>
   <p class="credito">
     <span id="anio">©</span> · Desarrollado por <b>José Manuel Leiva Díaz</b> · Todos los derechos reservados<br>
-    <a href="tel:+50586683862">+505 8668 3862</a> · para desarrollos informáticos
+    <a href="https://wa.me/50586683862?text=Hola%20Jos%C3%A9%20Manuel%2C%20vi%20tu%20trabajo%20en%20Batilandia%20y%20quiero%20consultarte%20por%20un%20desarrollo."
+       target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.5 14.1c-.2.6-1.2 1.2-1.7 1.2-.5.1-1 .1-1.6-.1a12 12 0 0 1-6.4-5.6c-.5-.9-.7-1.7-.6-2.4.1-.7.6-1.3 1-1.6.3-.2.7-.2 1 0l.9 1.9c.1.3.1.5-.1.8l-.4.5c-.2.2-.2.4-.1.6a8 8 0 0 0 3.5 3.1c.3.1.5.1.7-.1l.6-.7c.2-.2.4-.3.7-.2l1.9.9c.3.2.4.6.3 1Z"/>
+      </svg>+505 8668 3862</a> · para desarrollos informáticos
   </p>
 </footer>
 
