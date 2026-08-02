@@ -30,6 +30,62 @@ const PAGINA = 80;
 
 const DIA = 24 * 60 * 60 * 1000;
 
+/* Carpeta del repositorio donde vive el sitio */
+const CARPETA = "public/";
+
+/* =========================================================
+   GitHub, desde acá y no desde el teléfono
+   El token vive como secreto en Cloudflare. Así el panel solo
+   necesita una contraseña corta, y la llave con permiso de
+   escritura nunca baja al teléfono de nadie.
+   ========================================================= */
+function faltaConfigurar(env){
+  const faltan = [];
+  if (!env.CLAVE_PANEL)  faltan.push("CLAVE_PANEL");
+  if (!env.GITHUB_TOKEN) faltan.push("GITHUB_TOKEN");
+  if (!env.GITHUB_REPO)  faltan.push("GITHUB_REPO");
+  return faltan;
+}
+
+async function github(env, ruta, opciones){
+  const url = "https://api.github.com/repos/" + env.GITHUB_REPO + "/contents/" + ruta;
+  const r = await fetch(url, Object.assign({}, opciones, {
+    headers: Object.assign({
+      "Authorization": "Bearer " + env.GITHUB_TOKEN,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "batilandia"
+    }, (opciones && opciones.headers) || {})
+  }));
+  if (!r.ok){
+    let detalle = "";
+    try { detalle = (await r.json()).message || ""; } catch(e){}
+    if (r.status === 401) throw new Error("La llave de GitHub guardada en Cloudflare no sirve o ya venció.");
+    if (r.status === 404) throw new Error("No se encontró el repositorio o el archivo. Revisá GITHUB_REPO.");
+    throw new Error("GitHub respondió " + r.status + (detalle ? ": " + detalle : ""));
+  }
+  return r.json();
+}
+
+/* En tandas: con un solo spread, un archivo grande revienta la pila */
+function aBase64(txt){
+  const bytes = new TextEncoder().encode(txt);
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+const deBase64 = b64 => new TextDecoder().decode(
+  Uint8Array.from(atob(String(b64).replace(/\s/g, "")), c => c.charCodeAt(0)));
+
+async function escribirEnGitHub(env, ruta, base64, mensaje){
+  let sha = null;
+  try { sha = (await github(env, ruta + "?t=" + Date.now())).sha; } catch(e){ /* no existe: se crea */ }
+  const cuerpo = { message: mensaje, content: base64 };
+  if (sha) cuerpo.sha = sha;
+  return github(env, ruta, { method:"PUT", body: JSON.stringify(cuerpo) });
+}
+
 /* =========================================================
    Base de datos
    ========================================================= */
@@ -40,11 +96,15 @@ async function asegurarTablas(db){
   await db.batch([
     db.prepare(`CREATE TABLE IF NOT EXISTS pedidos (
       id        TEXT PRIMARY KEY,
+      codigo    TEXT,
       creado    INTEGER NOT NULL,
       estado    TEXT NOT NULL DEFAULT 'nuevo',
       cliente   TEXT,
       direccion TEXT,
       nota      TEXT,
+      pago      TEXT,
+      lat       REAL,
+      lon       REAL,
       total     INTEGER NOT NULL,
       unidades  INTEGER NOT NULL,
       items     TEXT NOT NULL,
@@ -62,7 +122,21 @@ async function asegurarTablas(db){
     db.prepare(`CREATE INDEX IF NOT EXISTS i_pedidos_estado ON pedidos(estado)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS i_lineas_creado  ON lineas(creado)`)
   ]);
+  /* Para bases creadas antes de que existiera el código de pedido.
+     Si la columna ya está, SQLite se queja y no pasa nada. */
+  for (const col of ["codigo TEXT", "pago TEXT", "lat REAL", "lon REAL"]){
+    try { await db.prepare(`ALTER TABLE pedidos ADD COLUMN ${col}`).run(); } catch(e){}
+  }
   tablasListas = true;
+}
+
+/* Código corto para poder cruzar el chat de WhatsApp con el panel.
+   Sin O ni 0 ni I ni 1, que se confunden al leerlos. */
+const LETRAS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function codigoNuevo(){
+  const a = new Uint8Array(4);
+  crypto.getRandomValues(a);
+  return Array.from(a, n => LETRAS[n % LETRAS.length]).join("");
 }
 
 /* =========================================================
@@ -137,14 +211,74 @@ async function despachar(request, env, url){
   const ruta = url.pathname;
   const metodo = request.method;
 
-  if (ruta === "/api/populares" && metodo === "GET")  return populares(env, url);
-  if (ruta === "/api/pedidos"   && metodo === "POST") return crearPedido(request, env, url);
-  if (ruta === "/api/pedidos"   && metodo === "GET")  return listarPedidos(request, env, url);
+  if (ruta === "/api/populares"  && metodo === "GET")  return populares(env, url);
+  if (ruta === "/api/pedidos"    && metodo === "POST") return crearPedido(request, env, url);
+  if (ruta === "/api/pedidos"    && metodo === "GET")  return listarPedidos(request, env, url);
+
+  /* Qué falta configurar. Público a propósito: la pantalla de entrada
+     necesita poder avisar antes de que nadie escriba una contraseña. */
+  if (ruta === "/api/estado" && metodo === "GET")
+    return responder({ falta: faltaConfigurar(env), conBase: !!env.DB });
+
+  if (ruta === "/api/contenido" && metodo === "GET") return leerContenido(request, env);
+  if (ruta === "/api/contenido" && metodo === "PUT") return guardarContenido(request, env);
+  if (ruta === "/api/foto"      && metodo === "POST") return subirFoto(request, env);
 
   const uno = ruta.match(/^\/api\/pedidos\/([a-z0-9]{1,40})$/);
   if (uno && metodo === "PATCH") return cambiarEstado(request, env, uno[1]);
 
   return problema("Esa dirección no existe.", 404);
+}
+
+/* ---------- el menú, leído y guardado por el servidor ---------- */
+function revisarPanel(request, env){
+  if (!autorizado(request, env)) return problema("Clave incorrecta.", 401);
+  const faltan = faltaConfigurar(env);
+  if (faltan.length) return problema("Falta configurar en Cloudflare: " + faltan.join(", "), 503);
+  return null;
+}
+
+async function leerContenido(request, env){
+  const mal = revisarPanel(request, env);
+  if (mal) return mal;
+  const j = await github(env, CARPETA + "datos.json?t=" + Date.now());
+  return responder({ datos: JSON.parse(deBase64(j.content)) });
+}
+
+async function guardarContenido(request, env){
+  const mal = revisarPanel(request, env);
+  if (mal) return mal;
+
+  let cuerpo;
+  try { cuerpo = await request.json(); }
+  catch(e){ return problema("El contenido llegó mal armado."); }
+  const d = cuerpo.datos;
+  /* Un guardado con la forma rota dejaría el sitio en blanco */
+  if (!d || !Array.isArray(d.productos) || !Array.isArray(d.categorias) || !d.negocio)
+    return problema("Ese contenido no tiene la forma de un menú.");
+
+  await escribirEnGitHub(env, CARPETA + "datos.json",
+    aBase64(JSON.stringify(d, null, 2)), "Actualización desde el panel");
+  return responder({ ok: true });
+}
+
+const resbalar = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "foto";
+
+async function subirFoto(request, env){
+  const mal = revisarPanel(request, env);
+  if (mal) return mal;
+
+  let cuerpo;
+  try { cuerpo = await request.json(); }
+  catch(e){ return problema("La foto llegó mal armada."); }
+  const b64 = String(cuerpo.base64 || "").replace(/\s/g, "");
+  if (!b64 || !/^[A-Za-z0-9+/=]+$/.test(b64)) return problema("Eso no parece una foto.");
+  if (b64.length > 8 * 1024 * 1024) return problema("La foto pesa demasiado.");
+
+  const ruta = "fotos/" + resbalar(String(cuerpo.nombre || "")) + "-" + Date.now().toString(36) + ".jpg";
+  await escribirEnGitHub(env, CARPETA + ruta, b64, "Foto: " + String(cuerpo.nombre || "").slice(0, 60));
+  return responder({ ruta: ruta });
 }
 
 /* ---------- lo más vendido (público) ---------- */
@@ -210,13 +344,31 @@ async function crearPedido(request, env, url){
 
   const id = idNuevo();
   const creado = Date.now();
+  /* El sitio manda el código que ya escribió en el mensaje de WhatsApp;
+     si no vino, generamos uno para que el pedido nunca quede sin. */
+  const codigo = /^[A-Z0-9]{4,8}$/.test(String(cuerpo.codigo || ""))
+    ? String(cuerpo.codigo) : codigoNuevo();
+
+  /* Forma de pago: solo las dos que el sitio ofrece */
+  const pago = ["efectivo","transferencia"].includes(cuerpo.pago) ? cuerpo.pago : "efectivo";
+
+  /* La ubicación se guarda como dos números, nunca como un enlace que
+     mandó el navegador: así el panel arma el suyo y nadie puede colar
+     una dirección web cualquiera. */
+  const punto = { lat:null, lon:null };
+  const la = parseFloat(cuerpo.lat), lo = parseFloat(cuerpo.lon);
+  if (isFinite(la) && isFinite(lo) && Math.abs(la) <= 90 && Math.abs(lo) <= 180){
+    punto.lat = la; punto.lon = lo;
+  }
 
   const sentencias = [
     env.DB.prepare(
-      `INSERT INTO pedidos (id, creado, estado, cliente, direccion, nota, total, unidades, items, huella)
-       VALUES (?, ?, 'nuevo', ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, creado, recortar(cuerpo.cliente), recortar(cuerpo.direccion),
-           recortar(cuerpo.nota), total, unidades, JSON.stringify(items), huella)
+      `INSERT INTO pedidos (id, codigo, creado, estado, cliente, direccion, nota, pago, lat, lon,
+                            total, unidades, items, huella)
+       VALUES (?, ?, ?, 'nuevo', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(id, codigo, creado, recortar(cuerpo.cliente), recortar(cuerpo.direccion),
+           recortar(cuerpo.nota), pago, punto.lat, punto.lon,
+           total, unidades, JSON.stringify(items), huella)
   ];
   for (const it of items){
     sentencias.push(env.DB.prepare(
@@ -225,7 +377,7 @@ async function crearPedido(request, env, url){
   }
   await env.DB.batch(sentencias);
 
-  return responder({ id: id, total: total });
+  return responder({ id: id, codigo: codigo, total: total });
 }
 
 /* ---------- la lista del panel (privado) ---------- */
@@ -237,13 +389,20 @@ async function listarPedidos(request, env, url){
   const pedido = url.searchParams.get("estado") || "nuevo";
   const filtro = ["nuevo","entregado","cancelado","todos"].includes(pedido) ? pedido : "nuevo";
 
+  /* Buscar por el código que sale en el chat, o por el nombre.
+     Cuando se busca, el estado no filtra: si escribís el código
+     querés ese pedido, esté donde esté. */
+  const buscar = (url.searchParams.get("buscar") || "").trim().slice(0, 40);
+  const como = "%" + buscar + "%";
+
   const lista = await env.DB.prepare(
-    `SELECT id, creado, estado, cliente, direccion, nota, total, unidades, items
+    `SELECT id, codigo, creado, estado, cliente, direccion, nota, pago, lat, lon, total, unidades, items
        FROM pedidos
-      WHERE (?1 = 'todos' OR estado = ?1)
+      WHERE (?1 <> '' OR ?2 = 'todos' OR estado = ?2)
+        AND (?1 = '' OR codigo LIKE ?3 OR cliente LIKE ?3)
       ORDER BY creado DESC
-      LIMIT ?2`
-  ).bind(filtro, PAGINA).all();
+      LIMIT ?4`
+  ).bind(buscar, filtro, como, PAGINA).all();
 
   const menu = await leerMenu(env, url);
   const zona = menu && menu.horario ? menu.horario.zona : 0;

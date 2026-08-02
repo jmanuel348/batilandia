@@ -81,6 +81,20 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--oro)}
 .pedido-caja.entregado,.pedido-caja.cancelado{opacity:.55}
 .pedido-tope{display:flex;align-items:baseline;gap:8px}
 .pedido-tope b{flex:1;font-weight:500;font-size:1.02rem}
+/* el código que el cliente tiene en su mensaje de WhatsApp */
+.codigo{
+  font-size:.76rem;font-weight:600;letter-spacing:.06em;
+  background:var(--vino);color:#fff;padding:2px 8px;border-radius:7px;
+  flex:0 0 auto;font-variant-numeric:tabular-nums;
+}
+.pago{font-weight:400;padding:1px 7px;border-radius:6px}
+.pago.efectivo{background:#DFF2E4;color:#1E6B38}
+.pago.transfer{background:#E4E8F5;color:#33447A}
+.ver-mapa{color:var(--vino);font-weight:500;text-decoration:none;
+  border-bottom:1px solid rgba(164,18,31,.35)}
+.buscar-pedido{margin-bottom:13px}
+.buscar-pedido input{text-transform:uppercase}
+.buscar-pedido input::placeholder{text-transform:none}
 .pedido-tope .plata{font-weight:600;color:var(--vino);font-size:1.1rem;white-space:nowrap}
 .pedido-hora{font-size:.8rem;font-weight:300;color:var(--tinta-suave);margin:2px 0 9px}
 .etiqueta-estado{display:inline-block;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
@@ -198,19 +212,12 @@ input[type=file]{display:none}
   <!-- ============ ENTRAR ============ -->
   <section id="entrar" class="caja">
     <h2>Entrar al panel</h2>
-    <p class="ayuda">Necesitás una llave de acceso de GitHub. Se genera una sola vez y queda guardada en este teléfono. La guía tiene el paso a paso.</p>
+    <p class="ayuda">Escribí tu clave. Queda guardada en este teléfono, así la próxima vez entra sola.</p>
     <div id="msg-entrar"></div>
     <label class="campo">
-      <span>Repositorio</span>
-      <input type="text" id="in-repo" placeholder="tuusuario/batilandia" autocapitalize="off" autocorrect="off" spellcheck="false">
-    </label>
-    <label class="campo">
-      <span>Llave de acceso</span>
-      <input type="password" id="in-token" placeholder="github_pat_…" autocapitalize="off" autocorrect="off" spellcheck="false">
-    </label>
-    <label class="campo">
-      <span>Clave de pedidos (opcional)</span>
-      <input type="password" id="in-clave" placeholder="Dejala vacía si todavía no la creaste" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <span>Clave</span>
+      <input type="password" id="in-clave" placeholder="La que creaste en Cloudflare"
+             autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="current-password">
     </label>
     <button class="boton" id="btn-entrar">Entrar</button>
   </section>
@@ -248,17 +255,14 @@ const recordar = (k,v) => { try{ localStorage.setItem(k,v); }catch(e){ memoria[k
 const recordado = k => { try{ return localStorage.getItem(k); }catch(e){ return memoria[k]||null; } };
 const olvidar = k => { try{ localStorage.removeItem(k); }catch(e){ delete memoria[k]; } };
 
-/* Carpeta del repositorio donde viven los archivos del sitio.
-   Si algún día los movés, cambiá solo esta línea. */
-const CARPETA = "public/";
-
-let REPO = "", TOKEN = "";
-let CLAVE = "";            // clave del servidor de pedidos
+let CLAVE = "";            // la única contraseña del panel
 let D = null;              // contenido completo
 let sucio = false;         // hay cambios sin publicar
 let vistaActual = "pedidos";
 let filtroTexto = "";
 let filtroPedidos = "nuevo";
+let buscarPedido = "";       // código del chat, o nombre
+let esperaBusqueda = null;
 
 const $ = s => document.querySelector(s);
 const escapar = t => String(t==null?"":t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -351,30 +355,9 @@ function mensaje(donde, texto, tipo){
 }
 
 /* =========================================================
-   GitHub
-   ========================================================= */
-async function gh(ruta, opciones){
-  const url = "https://api.github.com/repos/" + REPO + "/contents/" + ruta;
-  const r = await fetch(url, Object.assign({}, opciones, {
-    headers: Object.assign({
-      "Authorization": "Bearer " + TOKEN,
-      "Accept": "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28"
-    }, (opciones && opciones.headers) || {})
-  }));
-  if (!r.ok){
-    let detalle = "";
-    try { detalle = (await r.json()).message || ""; } catch(e){}
-    if (r.status === 401) throw new Error("La llave de acceso no es válida o ya venció.");
-    if (r.status === 404) throw new Error("No se encontró el repositorio o el archivo. Revisá que el nombre esté bien escrito.");
-    throw new Error("GitHub respondió " + r.status + (detalle ? ": " + detalle : ""));
-  }
-  return r.json();
-}
-
-/* =========================================================
-   Servidor de pedidos
-   Vive en el mismo sitio, bajo /api. La clave se pone al entrar.
+   El servidor
+   Todo pasa por acá: el menú, las fotos y los pedidos. La llave
+   de GitHub vive como secreto en Cloudflare, nunca en el teléfono.
    ========================================================= */
 async function api(ruta, opciones){
   const r = await fetch("/api" + ruta, Object.assign({}, opciones, {
@@ -383,27 +366,32 @@ async function api(ruta, opciones){
       "content-type": "application/json"
     }, (opciones && opciones.headers) || {})
   }));
-  if (r.status === 401) throw new Error("La clave de pedidos no es correcta.");
-  if (r.status === 404) throw new Error("No encontré el servidor de pedidos. Si estás viendo el sitio en local, esto solo funciona en el sitio publicado.");
-  if (r.status === 503) throw new Error("Todavía no está creada la base de pedidos en Cloudflare. La guía tiene el paso a paso.");
-  if (!r.ok) throw new Error("El servidor respondió " + r.status + ".");
+  if (r.status === 401) throw new Error("Esa clave no es correcta.");
+  if (r.status === 404) throw new Error("No encontré el servidor. Si estás viendo el sitio en local, el panel solo funciona en el sitio publicado.");
+  if (!r.ok){
+    let detalle = "";
+    try { detalle = (await r.json()).error || ""; } catch(e){}
+    throw new Error(detalle || ("El servidor respondió " + r.status + "."));
+  }
   return r.json();
 }
 
-const aBase64 = txt => btoa(unescape(encodeURIComponent(txt)));
-const deBase64 = b64 => decodeURIComponent(escape(atob(String(b64).replace(/\s/g,""))));
-
-async function leerDatos(){
-  const j = await gh(CARPETA + "datos.json?t=" + Date.now(), { method:"GET", cache:"no-store" });
-  return { datos: JSON.parse(deBase64(j.content)), sha: j.sha };
+/* Qué falta configurar en Cloudflare. Se consulta sin clave, para
+   poder avisar antes de que escribas nada. */
+async function estadoServidor(){
+  try {
+    const r = await fetch("/api/estado");
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e){ return null; }
 }
 
-async function escribirArchivo(ruta, contenidoBase64, mensajeCommit){
-  let sha = null;
-  try { sha = (await gh(ruta + "?t=" + Date.now(), { method:"GET", cache:"no-store" })).sha; } catch(e){ /* no existe: se crea */ }
-  const cuerpo = { message: mensajeCommit, content: contenidoBase64 };
-  if (sha) cuerpo.sha = sha;
-  return gh(ruta, { method:"PUT", body: JSON.stringify(cuerpo) });
+async function leerDatos(){
+  return (await api("/contenido")).datos;
+}
+
+async function guardarDatos(datos){
+  return api("/contenido", { method:"PUT", body: JSON.stringify({ datos: datos }) });
 }
 
 /* --- fotos: se achican antes de subir --- */
@@ -433,44 +421,37 @@ function comprimir(archivo, lado, calidad){
 
 async function subirFoto(archivo, nombreBase){
   const b64 = await comprimir(archivo, 900, 0.82);
-  const rutaSitio = "fotos/" + resbalar(nombreBase) + "-" + Date.now().toString(36) + ".jpg";
-  await escribirArchivo(CARPETA + rutaSitio, b64, "Foto: " + nombreBase);
-  return rutaSitio;
+  const r = await api("/foto", { method:"POST",
+    body: JSON.stringify({ nombre: nombreBase, base64: b64 }) });
+  return r.ruta;
 }
 
 /* =========================================================
    Entrar / salir
    ========================================================= */
-async function entrar(repo, token, clave){
-  REPO = repo.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,"");
-  TOKEN = token.trim();
+async function entrar(clave){
   CLAVE = (clave || "").trim();
-  const r = await leerDatos();
-  D = r.datos;
-  recordar("bati_repo", REPO);
-  recordar("bati_token", TOKEN);
-  if (CLAVE) recordar("bati_clave", CLAVE); else olvidar("bati_clave");
+  D = await leerDatos();          // si la clave está mal, revienta acá
+  recordar("bati_clave", CLAVE);
   $("#entrar").hidden = true;
   $("#panel").hidden = false;
   $("#barra").hidden = false;
   $("#salir").hidden = false;
-  /* Sin clave, la pestaña de pedidos no sirve: arrancamos en Batidos */
-  seleccionarPestana(CLAVE ? "pedidos" : "batidos");
+  seleccionarPestana("pedidos");
 }
 
 $("#btn-entrar").addEventListener("click", async () => {
-  const repo = $("#in-repo").value, token = $("#in-token").value, clave = $("#in-clave").value;
-  if (!repo || !token){ mensaje("#msg-entrar","Faltan datos: escribí el repositorio y la llave.","error"); return; }
+  const clave = $("#in-clave").value;
+  if (!clave){ mensaje("#msg-entrar","Escribí tu clave.","error"); return; }
   mensaje("#msg-entrar","Conectando…","trabajando");
   $("#btn-entrar").disabled = true;
-  try { await entrar(repo, token, clave); mensaje("#msg-entrar","",""); }
+  try { await entrar(clave); mensaje("#msg-entrar","",""); }
   catch(e){ mensaje("#msg-entrar", e.message, "error"); }
   $("#btn-entrar").disabled = false;
 });
 
 $("#salir").addEventListener("click", () => {
   if (sucio && !confirm("Tenés cambios sin publicar. ¿Salir de todos modos?")) return;
-  olvidar("bati_token");
   olvidar("bati_clave");
   location.reload();
 });
@@ -494,7 +475,7 @@ $("#btn-guardar").addEventListener("click", async () => {
   b.disabled = true;
   $("#aviso-guardar").textContent = "Publicando…";
   try {
-    await escribirArchivo(CARPETA + "datos.json", aBase64(JSON.stringify(D, null, 2)), "Actualización desde el panel");
+    await guardarDatos(D);
     marcarLimpio("Publicado. El sitio se actualiza en un minuto.");
   } catch(e){
     $("#aviso-guardar").textContent = e.message;
@@ -549,10 +530,20 @@ function tarjetaPedido(p){
   const items = p.items.map(i =>
     '<li><span>'+i.cantidad+'× '+escapar(i.nombre)+'</span><span>C$'+(i.precio*i.cantidad)+'</span></li>'
   ).join("");
+  /* El mismo código que el cliente tiene en su mensaje de WhatsApp */
+  const codigo = p.codigo ? '<span class="codigo">#'+escapar(p.codigo)+'</span>' : '';
 
-  const extra = (p.direccion || p.nota)
+  /* El enlace del mapa se arma acá con los números guardados, no con
+     una dirección que haya mandado el navegador de nadie. */
+  const mapa = (p.lat != null && p.lon != null)
+    ? '<a class="ver-mapa" target="_blank" rel="noopener" ' +
+      'href="https://www.google.com/maps?q='+p.lat+','+p.lon+'">Ver en el mapa</a>'
+    : '';
+
+  const extra = (p.direccion || p.nota || mapa)
     ? '<p class="pedido-extra">' +
       (p.direccion ? '<span>Entrega: '+escapar(p.direccion)+'</span>' : '') +
+      (mapa        ? '<span>'+mapa+'</span>' : '') +
       (p.nota      ? '<span>Nota: '+escapar(p.nota)+'</span>' : '') + '</p>'
     : '';
 
@@ -562,28 +553,24 @@ function tarjetaPedido(p){
     : '<button class="b-volver" data-estado="nuevo" data-pedido="'+p.id+'">Volver a sin confirmar</button>';
 
   return '<div class="pedido-caja '+escapar(p.estado)+'">' +
-    '<div class="pedido-tope"><b>'+escapar(p.cliente || "Sin nombre")+'</b>' +
+    '<div class="pedido-tope">'+codigo+'<b>'+escapar(p.cliente || "Sin nombre")+'</b>' +
       '<span class="plata">C$'+p.total+'</span></div>' +
     '<p class="pedido-hora">'+cuando(p.creado)+' · '+p.unidades+(p.unidades === 1 ? ' batido' : ' batidos') +
+      ' · <span class="pago '+(p.pago === "transferencia" ? "transfer" : "efectivo")+'">' +
+      (p.pago === "transferencia" ? "Transferencia" : "Efectivo") + '</span>' +
       (p.estado === "nuevo" ? '' : ' <span class="etiqueta-estado">'+escapar(p.estado)+'</span>') + '</p>' +
     '<ul class="pedido-items">'+items+'</ul>' + extra +
     '<div class="pedido-acciones">'+acciones+'</div></div>';
 }
 
 async function pintarPedidos(){
-  if (!CLAVE){
-    $("#vista").innerHTML = TITULO_PEDIDOS +
-      '<div class="caja"><p class="ayuda" style="margin:0">Todavía no pusiste la clave de pedidos. ' +
-      'Tocá <b>Salir</b> y volvé a entrar escribiéndola en el tercer campo. ' +
-      'Si todavía no la creaste, la guía explica cómo.</p></div>';
-    contadorPendientes(0);
-    return;
-  }
-
   $("#vista").innerHTML = TITULO_PEDIDOS + '<p class="vacio-lista">Buscando pedidos…</p>';
 
   let d;
-  try { d = await api("/pedidos?estado=" + filtroPedidos); }
+  const consulta = buscarPedido
+    ? "/pedidos?buscar=" + encodeURIComponent(buscarPedido)
+    : "/pedidos?estado=" + filtroPedidos;
+  try { d = await api(consulta); }
   catch(e){
     $("#vista").innerHTML = TITULO_PEDIDOS + '<div class="mensaje error">'+escapar(e.message)+'</div>';
     return;
@@ -599,16 +586,25 @@ async function pintarPedidos(){
       '<div class="dato"><b>'+r.hoyCuantos+'</b><small>Entregados hoy</small></div>' +
       '<div class="dato"><b>C$'+r.hoyPlata+'</b><small>Vendido hoy</small></div>' +
     '</div>' +
-    '<div class="filtros">' + Object.keys(etiquetas).map(k =>
+    /* El código que el cliente tiene en su chat: cuatro letras y listo */
+    '<label class="campo buscar-pedido"><input type="search" id="buscar-pedido" ' +
+      'placeholder="Código del chat o nombre…" value="'+escapar(buscarPedido)+'" ' +
+      'autocapitalize="characters" autocorrect="off" spellcheck="false"></label>';
+
+  if (!buscarPedido){
+    html += '<div class="filtros">' + Object.keys(etiquetas).map(k =>
       '<button data-filtro="'+k+'" aria-pressed="'+(k === filtroPedidos)+'">'+etiquetas[k]+
       (k === "nuevo" && r.sinConfirmar ? ' ('+r.sinConfirmar+')' : '')+'</button>'
     ).join("") + '</div>';
+  }
 
   html += d.pedidos.length
     ? d.pedidos.map(tarjetaPedido).join("")
-    : '<p class="vacio-lista">' + (filtroPedidos === "nuevo"
-        ? "Ningún pedido esperando confirmación."
-        : "Todavía no hay pedidos acá.") + '</p>';
+    : '<p class="vacio-lista">' + (buscarPedido
+        ? "Ningún pedido con «" + escapar(buscarPedido) + "»."
+        : (filtroPedidos === "nuevo"
+          ? "Ningún pedido esperando confirmación."
+          : "Todavía no hay pedidos acá.")) + '</p>';
 
   html += '<div class="encabezado-lista" style="margin-top:24px"><h2>Lo que más se vende</h2></div>';
   html += d.top.length
@@ -622,6 +618,20 @@ async function pintarPedidos(){
       'Apenas confirmes las primeras, acá aparece el ranking y el sitio empieza a marcar solo los más pedidos.</p></div>';
 
   $("#vista").innerHTML = html;
+
+  /* El buscador espera a que dejes de escribir, para no pedirle
+     la lista al servidor en cada tecla. */
+  const b = $("#buscar-pedido");
+  if (b) b.addEventListener("input", e => {
+    const valor = e.target.value;
+    clearTimeout(esperaBusqueda);
+    esperaBusqueda = setTimeout(async () => {
+      buscarPedido = valor.trim();
+      await pintarPedidos();
+      const nuevo = $("#buscar-pedido");
+      if (nuevo){ nuevo.focus(); nuevo.setSelectionRange(nuevo.value.length, nuevo.value.length); }
+    }, 350);
+  });
 }
 
 /* =========================================================
@@ -845,6 +855,9 @@ function pintarNegocio(){
       '<label class="campo"><span>WhatsApp (505 + número)</span><input type="text" id="n-wa" inputmode="numeric" value="'+escapar(n.whatsapp)+'"></label>' +
       '<label class="campo"><span>Dirección</span><input type="text" id="n-dir" value="'+escapar(n.direccion)+'"></label>' +
       '<label class="campo"><span>Página de Facebook</span><input type="text" id="n-fb" value="'+escapar(n.facebook)+'" placeholder="https://facebook.com/…"></label>' +
+      '<label class="campo"><span>Datos para transferencia</span>' +
+        '<textarea id="n-banco" rows="3" placeholder="BAC 1234567890&#10;A nombre de: …">'+escapar(n.banco||"")+'</textarea></label>' +
+      '<p class="ayuda" style="margin:-6px 0 13px">Esto le aparece al cliente solo si elige pagar por transferencia. Si lo dejás vacío, no se muestra nada.</p>' +
       '<label class="marca-check"><input type="checkbox" id="n-entrega"'+(n.pedirDireccion?" checked":"")+'> Pedir dirección de entrega en el pedido</label>' +
     '</div>' +
     '<div class="encabezado-lista"><h2>Horario</h2></div>' +
@@ -868,7 +881,7 @@ function pintarNegocio(){
     });
   };
   enlazar("#n-nombre","nombre"); enlazar("#n-lema","lema"); enlazar("#n-wa","whatsapp");
-  enlazar("#n-dir","direccion"); enlazar("#n-fb","facebook");
+  enlazar("#n-dir","direccion"); enlazar("#n-fb","facebook"); enlazar("#n-banco","banco");
   $("#n-entrega").addEventListener("change", e => { D.negocio.pedirDireccion = e.target.checked; marcarSucio(); });
 
   document.querySelectorAll(".d-abierto").forEach(el => el.addEventListener("change", e => {
@@ -956,12 +969,21 @@ document.addEventListener("click", e => {
    Arranque: si ya entró antes, reconecta solo
    ========================================================= */
 (async function(){
-  const r = recordado("bati_repo"), t = recordado("bati_token"), c = recordado("bati_clave");
-  if (!r || !t) return;
-  $("#in-repo").value = r;
+  /* Primero: ¿está el servidor listo? Si falta algo en Cloudflare
+     conviene decirlo antes de que escriba una clave que no va a servir. */
+  const est = await estadoServidor();
+  if (est && est.falta && est.falta.length){
+    mensaje("#msg-entrar",
+      "Falta configurar en Cloudflare: " + est.falta.join(", ") +
+      ". Mirá la Parte 6 de la guía.", "error");
+    return;
+  }
+
+  const c = recordado("bati_clave");
+  if (!c) return;
   mensaje("#msg-entrar","Conectando…","trabajando");
-  try { await entrar(r, t, c); mensaje("#msg-entrar","",""); }
-  catch(e){ mensaje("#msg-entrar", e.message + " Volvé a entrar.", "error"); olvidar("bati_token"); }
+  try { await entrar(c); mensaje("#msg-entrar","",""); }
+  catch(e){ mensaje("#msg-entrar", e.message + " Volvé a entrar.", "error"); olvidar("bati_clave"); }
 })();
 </script>
 </body>

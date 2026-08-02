@@ -98,9 +98,11 @@ Necesitás Visa o Mastercard habilitada para compras internacionales. Si la tuya
 
 ## Parte 4 — Activar el panel
 
-El panel necesita permiso para guardar en tu repositorio. Ese permiso es una **llave de acceso** que se genera una sola vez.
+Para entrar al panel escribís **una sola contraseña, corta, que inventás vos**. La llave larga de GitHub se guarda una vez en Cloudflare y nunca más la ves ni la escribís.
 
-### Paso 3. Crear la llave
+Son tres cosas que se configuran una sola vez.
+
+### Paso 3. Crear la llave de GitHub
 
 1. En GitHub: tu foto (arriba a la derecha) → **Settings**.
 2. Al final del menú izquierdo → **Developer settings**.
@@ -111,18 +113,31 @@ El panel necesita permiso para guardar en tu repositorio. Ese permiso es una **l
    - **Repository access:** *Only select repositories* → `batilandia`
    - **Permissions** → *Repository permissions* → **Contents** → **Read and write**
 5. **Generate token**.
-6. **Copiá la llave ahora.** GitHub la muestra una sola vez. Guardala en Notas o en el llavero.
+6. **Copiá la llave ahora.** GitHub la muestra una sola vez.
 
-### Paso 4. Entrar
+### Paso 4. Guardarla en Cloudflare
+
+En Cloudflare → **Workers y Pages** → tu proyecto `batilandia` → **Settings** → **Variables and Secrets**. Con **Add** creás tres, todas de tipo **Secret**:
+
+| Nombre | Valor |
+|---|---|
+| `GITHUB_TOKEN` | La llave que acabás de copiar |
+| `GITHUB_REPO` | `jmanuel348/batilandia` |
+| `CLAVE_PANEL` | La contraseña que inventás para entrar |
+
+Los nombres van **escritos igual**, todo en mayúsculas y con guion bajo. Si uno queda distinto, el panel avisa cuál falta.
+
+Para la contraseña: que sea larga y que no la uses en otro lado. Tres o cuatro palabras pegadas funcionan bien y se recuerdan, tipo `mango-tortuga-92-ventana`. Anotala.
+
+### Paso 5. Entrar
 
 1. Abrí `batilandia.josemanuelleivadiaz4.workers.dev/admin.html` — cuando conectés el dominio, también va a funcionar en `batilandia.net/admin.html`
-2. **Repositorio:** `jmanuel348/batilandia`
-3. **Llave de acceso:** la que copiaste
-4. **Entrar**
+2. Escribí tu contraseña
+3. **Entrar**
 
 Queda guardada en ese teléfono, así que la próxima vez entra sola.
 
-> **¿Es riesgoso que el panel esté público?** No. Sin la llave, quien abra esa dirección solo ve la pantalla de entrada. Si querés más discreción, renombrá el archivo a algo como `public/panel-8k2.html`.
+> **¿Es riesgoso que el panel esté público?** No. Sin la contraseña, quien abra esa dirección solo ve la pantalla de entrada. Y desde que la llave de GitHub vive en Cloudflare, ya no queda ninguna copia de ella en tu teléfono: si lo perdés, nadie puede tocar tu repositorio.
 
 ---
 
@@ -137,6 +152,10 @@ Tres pestañas: **Batidos**, **Categorías**, **Negocio**.
 **Crear categorías.** *Categorías* → **+ Nueva**. Las flechas ↑↓ cambian el orden en el sitio. Para eliminar una, primero movés sus batidos a otra.
 
 **Horario.** *Negocio* → tabla de los siete días. El sitio calcula solo si estás abierto. Los pedidos entran igual a toda hora; cuando está cerrado aparece un aviso de que lo confirmás al abrir.
+
+**Cobrar por transferencia.** *Negocio* → **Datos para transferencia**. Escribí ahí el banco, el número de cuenta y a nombre de quién. Al cliente le aparece **solo si elige pagar por transferencia**; si lo dejás vacío, no se muestra nada y la opción igual funciona.
+
+**La ubicación del cliente.** En el pedido hay un botón *Usar mi ubicación*. El cliente lo toca, el teléfono le pide permiso, y el enlace de Google Maps viaja con el pedido. No usa ninguna cuenta ni API de Google: es algo que el navegador ya sabe hacer. Si no da permiso, escribe la dirección a mano como siempre.
 
 **Publicar.** Nada sale al aire hasta que tocás **Publicar**. De ahí, cerca de un minuto.
 
@@ -174,27 +193,15 @@ Tiene que quedar así:
   ],
 ```
 
-### Paso 7. Crear la clave del panel
-
-Es una contraseña que inventás vos. Sirve para que solo vos puedas ver los pedidos.
-
-1. En Cloudflare → **Workers y Pages** → tu proyecto `batilandia`.
-2. **Settings** → **Variables and Secrets** → **Add**.
-3. Tipo: **Secret**. Nombre: `CLAVE_PANEL` — escrito igual, todo en mayúsculas.
-4. Valor: la contraseña que quieras. Larga y que no sea tu cumpleaños.
-5. **Save**. Anotala donde anotaste la llave de GitHub.
-
-### Paso 8. Entrar
-
-En el panel, la pantalla de entrada ahora tiene un tercer campo, **Clave de pedidos**. Poné ahí la que acabás de crear. Queda guardada igual que la otra.
-
-Si lo dejás vacío, el panel sigue funcionando para todo lo demás; solo que la pestaña de Pedidos te va a decir que falta la clave.
-
 ### Cómo se usa
 
 La pestaña **Pedidos** es la primera, y arriba te muestra cuántos entregaste hoy y cuánto vendiste.
 
-Cada pedido que entra aparece en **Sin confirmar**, con el nombre, lo que pidió, el total, la dirección y la nota. Dos botones:
+**Cada pedido trae un código de cuatro letras**, tipo `#A7K2`. El mismo código va en el mensaje de WhatsApp que te manda el cliente. Arriba de la lista hay un buscador: escribís esas cuatro letras y te queda solo ese pedido en pantalla, con el botón de confirmar ahí mismo. Se acabó el andar comparando totales para ver cuál era.
+
+También podés buscar por nombre.
+
+Cada pedido que entra aparece en **Sin confirmar**, con el nombre, lo que pidió, el total, **cómo va a pagar**, la dirección y la nota. Si el cliente compartió su ubicación, aparece **Ver en el mapa**, que te abre Google Maps parado en su casa. Dos botones:
 
 - **Entregado** — se lo diste y te pagó. Este es el que cuenta para las estadísticas.
 - **No se concretó** — nunca llegó, se arrepintió, o fue una prueba.
@@ -245,9 +252,13 @@ Esto no necesita configuración. Solo hay que subir cinco archivos nuevos a `pub
 
 ## Si algo no funciona
 
-**«La llave de acceso no es válida o ya venció».** Generá una nueva (Paso 3).
+**«Falta configurar en Cloudflare: …».** El panel te dice exactamente cuál de los tres secretos falta o está mal escrito. Andá al Paso 4.
 
-**«No se encontró el repositorio o el archivo».** Dos causas: el campo *Repositorio* mal escrito (va `jmanuel348/batilandia`, sin `https://`), o `datos.json` no está dentro de `public`.
+**«Esa clave no es correcta».** La que escribiste no coincide con `CLAVE_PANEL`. Si no te acordás, creá el secret de nuevo con otra contraseña: se reemplaza sin problema.
+
+**«La llave de GitHub guardada en Cloudflare no sirve o ya venció».** Pasó el año. Generá una nueva (Paso 3) y reemplazá el valor de `GITHUB_TOKEN` en Cloudflare.
+
+**«No se encontró el repositorio o el archivo».** El secret `GITHUB_REPO` está mal escrito. Va `jmanuel348/batilandia`, sin `https://`.
 
 **Publiqué pero el sitio se ve igual.** Esperá un minuto y recargá. Si sigue igual, probá en modo privado.
 

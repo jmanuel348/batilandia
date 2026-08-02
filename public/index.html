@@ -288,6 +288,33 @@ body.con-pedido .pie{padding-bottom:156px}
   background:#fff;font-family:inherit;font-size:1rem;color:var(--tinta);resize:vertical;
 }
 .campo input:focus,.campo textarea:focus{outline:none;border-color:var(--oro)}
+
+/* ubicación y forma de pago */
+.btn-ubicacion{
+  display:inline-flex;align-items:center;gap:7px;margin-top:8px;
+  padding:8px 14px;border-radius:999px;
+  background:var(--rosa-suave);color:var(--vino);font-size:.86rem;font-weight:500;
+}
+.btn-ubicacion:hover{background:#F9D3D0}
+.btn-ubicacion svg{width:16px;height:16px;flex:0 0 auto}
+.btn-ubicacion[disabled]{opacity:.6;cursor:progress}
+.aviso-ubicacion{margin:8px 0 0;font-size:.83rem;font-weight:300;color:var(--tinta-suave)}
+.aviso-ubicacion.puesta{color:#1E6B38;font-weight:400}
+.aviso-ubicacion.falla{color:#B0303C}
+
+.pagos{display:flex;gap:8px}
+.pagos button{
+  flex:1;padding:11px 8px;border-radius:12px;
+  background:#fff;box-shadow:inset 0 0 0 2px var(--rosa-suave);
+  color:var(--tinta);font-size:.94rem;font-weight:400;
+}
+.pagos button[aria-pressed="true"]{
+  background:var(--vino);color:#fff;box-shadow:none;font-weight:500;
+}
+.datos-banco{
+  margin:10px 0 0;background:#FBE9D6;color:#8A5A22;border-radius:12px;
+  padding:10px 13px;font-size:.86rem;font-weight:300;line-height:1.5;white-space:pre-line;
+}
 .enviar{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;background:#1FA855;color:#fff;padding:15px;border-radius:14px;font-size:1.05rem;font-weight:500;text-decoration:none;margin-top:6px}
 .enviar:hover{background:#188A45}
 .nota-hoja{text-align:center;font-size:.82rem;font-weight:300;color:var(--tinta-suave);margin:10px 0 0}
@@ -420,6 +447,22 @@ body.con-pedido .pie{padding-bottom:156px}
   <div class="campo" id="campo-entrega">
     <label for="c-direccion">Dirección de entrega (opcional)</label>
     <input id="c-direccion" type="text" placeholder="Si querés que te lo llevemos, escribí la dirección">
+    <button class="btn-ubicacion" id="btn-ubicacion" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+      Usar mi ubicación
+    </button>
+    <p class="aviso-ubicacion" id="aviso-ubicacion" hidden></p>
+  </div>
+
+  <div class="campo">
+    <label>¿Cómo vas a pagar?</label>
+    <div class="pagos" id="pagos" role="group" aria-label="Forma de pago">
+      <button type="button" data-pago="efectivo" aria-pressed="true">Efectivo</button>
+      <button type="button" data-pago="transferencia" aria-pressed="false">Transferencia</button>
+    </div>
+    <p class="datos-banco" id="datos-banco" hidden></p>
   </div>
   <div class="campo">
     <label for="c-nota">Nota (opcional)</label>
@@ -1163,6 +1206,21 @@ function pintarPedido(){
   $("#enviar").href = enlaceWhatsApp();
 }
 
+/* Código corto para cruzar el chat de WhatsApp con el panel.
+   Sin O ni 0 ni I ni 1, que se confunden al leerlos en voz alta.
+   Se arma uno por pedido y se usa el mismo en los dos lados. */
+const LETRAS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+let codigoPedido = "";
+let formaPago = "efectivo";
+let ubicacion = null;            // {lat, lon} si el cliente la comparte
+function nuevoCodigo(){
+  const a = new Uint8Array(4);
+  (crypto.getRandomValues ? crypto : { getRandomValues: x => x.forEach((_,i) => x[i] = Math.random()*256|0) })
+    .getRandomValues(a);
+  codigoPedido = Array.from(a, n => LETRAS[n % LETRAS.length]).join("");
+  return codigoPedido;
+}
+
 /* Deja constancia del pedido para que aparezca en el panel.
    Si esto falla, no pasa nada: el pedido igual se manda por
    WhatsApp, que es lo que de verdad le llega al negocio. */
@@ -1179,6 +1237,10 @@ function registrarPedido(){
       headers: { "content-type":"application/json" },
       body: JSON.stringify({
         lineas: lineas,
+        codigo: codigoPedido,
+        pago: formaPago,
+        lat: ubicacion ? ubicacion.lat : null,
+        lon: ubicacion ? ubicacion.lon : null,
         cliente: leer("c-nombre"),
         direccion: leer("c-direccion"),
         nota: leer("c-nota")
@@ -1204,17 +1266,21 @@ function enlaceWhatsApp(){
   const dirEl = $("#c-direccion");
   const dir = dirEl ? dirEl.value.trim() : "";
   const nota = ($("#c-nota")||{}).value ? $("#c-nota").value.trim() : "";
-  let txt = "*Pedido — " + D.negocio.nombre + "*\n\n";
+  let txt = "*Pedido #" + (codigoPedido || nuevoCodigo()) + " — " + D.negocio.nombre + "*\n\n";
   Object.entries(carrito).forEach(([id,c]) => {
     const p = producto(id); if (!p) return;
     txt += "• " + c + "x " + p.nombre + " — " + cordobas(p.precio*c) + "\n";
   });
   txt += "\n*Total: " + cordobas(totalCordobas()) + "*";
+  txt += "\nPago: " + (formaPago === "transferencia" ? "Transferencia" : "Efectivo");
   if (nombre) txt += "\nNombre: " + nombre;
   if (dir)    txt += "\nEntrega: " + dir;
+  if (ubicacion) txt += "\nUbicación: " + enlaceMapa(ubicacion);
   if (nota)   txt += "\nNota: " + nota;
   return "https://wa.me/" + D.negocio.whatsapp + "?text=" + encodeURIComponent(txt);
 }
+
+const enlaceMapa = u => "https://www.google.com/maps?q=" + u.lat + "," + u.lon;
 
 /* ---------- eventos ---------- */
 document.addEventListener("click", e => {
@@ -1236,6 +1302,54 @@ document.addEventListener("click", e => {
   }
 });
 $("#buscador").addEventListener("input", e => { busqueda = sinTildes(e.target.value.trim()); pintarMenu(); });
+
+/* ---------- forma de pago ---------- */
+$("#pagos").addEventListener("click", e => {
+  const b = e.target.closest("[data-pago]");
+  if (!b) return;
+  formaPago = b.dataset.pago;
+  $("#pagos").querySelectorAll("[data-pago]").forEach(x =>
+    x.setAttribute("aria-pressed", x.dataset.pago === formaPago));
+  /* los datos de la cuenta solo tienen sentido si va a transferir */
+  const caja = $("#datos-banco");
+  const banco = (D.negocio && D.negocio.banco || "").trim();
+  caja.hidden = !(formaPago === "transferencia" && banco);
+  caja.textContent = banco;
+  $("#enviar").href = enlaceWhatsApp();
+});
+
+/* ---------- ubicación ---------- */
+/* No hace falta ninguna API de Google: el navegador ya la da.
+   Solo se pide cuando el cliente toca el botón, nunca sola. */
+$("#btn-ubicacion").addEventListener("click", () => {
+  const boton = $("#btn-ubicacion"), aviso = $("#aviso-ubicacion");
+  const decir = (txt, clase) => {
+    aviso.hidden = false;
+    aviso.textContent = txt;
+    aviso.className = "aviso-ubicacion" + (clase ? " " + clase : "");
+  };
+  if (!navigator.geolocation) return decir("Este teléfono no puede compartir la ubicación.", "falla");
+
+  boton.disabled = true;
+  decir("Buscando dónde estás…");
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      boton.disabled = false;
+      ubicacion = { lat: +pos.coords.latitude.toFixed(6), lon: +pos.coords.longitude.toFixed(6) };
+      decir("Listo: tu ubicación va con el pedido.", "puesta");
+      $("#enviar").href = enlaceWhatsApp();
+    },
+    err => {
+      boton.disabled = false;
+      ubicacion = null;
+      decir(err.code === 1
+        ? "No diste permiso. Podés escribir la dirección a mano."
+        : "No se pudo encontrar tu ubicación. Escribí la dirección a mano.", "falla");
+      $("#enviar").href = enlaceWhatsApp();
+    },
+    { enableHighAccuracy:true, timeout:12000, maximumAge:60000 }
+  );
+});
 ["c-nombre","c-direccion","c-nota"].forEach(id => {
   const campo = document.getElementById(id);
   if (campo) campo.addEventListener("input", () => { $("#enviar").href = enlaceWhatsApp(); });
@@ -1253,6 +1367,7 @@ $("#velo").addEventListener("click", () => abrir(false));
 document.addEventListener("keydown", e => { if (e.key === "Escape") abrir(false); });
 $("#enviar").addEventListener("click", () => {
   registrarPedido();
+  codigoPedido = "";               // el próximo pedido lleva otro código
   setTimeout(() => abrir(false), 400);
 });
 
