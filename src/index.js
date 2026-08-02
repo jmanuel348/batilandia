@@ -232,9 +232,21 @@ async function despachar(request, env, url){
 
 /* ---------- el menú, leído y guardado por el servidor ---------- */
 function revisarPanel(request, env){
-  if (!autorizado(request, env)) return problema("Clave incorrecta.", 401);
+  /* Primero lo que falta configurar, y recién después la clave.
+     Al revés, cuando no existe CLAVE_PANEL el panel decía "clave
+     incorrecta" y mandaba a buscar un problema de contraseña que
+     no era: lo que faltaba era la configuración entera. */
   const faltan = faltaConfigurar(env);
   if (faltan.length) return problema("Falta configurar en Cloudflare: " + faltan.join(", "), 503);
+  if (!autorizado(request, env)) return problema("Clave incorrecta.", 401);
+  return null;
+}
+
+/* Lo mismo para los pedidos, que además necesitan la base */
+function revisarPedidos(request, env){
+  if (!env.CLAVE_PANEL) return problema("Falta configurar en Cloudflare: CLAVE_PANEL", 503);
+  if (!autorizado(request, env)) return problema("Clave incorrecta.", 401);
+  if (!env.DB) return problema("Todavía no está creada la base de pedidos.", 503);
   return null;
 }
 
@@ -382,8 +394,8 @@ async function crearPedido(request, env, url){
 
 /* ---------- la lista del panel (privado) ---------- */
 async function listarPedidos(request, env, url){
-  if (!autorizado(request, env)) return problema("Clave incorrecta.", 401);
-  if (!env.DB) return problema("Todavía no está creada la base de pedidos.", 503);
+  const mal = revisarPedidos(request, env);
+  if (mal) return mal;
   await asegurarTablas(env.DB);
 
   const pedido = url.searchParams.get("estado") || "nuevo";
@@ -439,8 +451,8 @@ async function listarPedidos(request, env, url){
 
 /* ---------- confirmar o cancelar (privado) ---------- */
 async function cambiarEstado(request, env, id){
-  if (!autorizado(request, env)) return problema("Clave incorrecta.", 401);
-  if (!env.DB) return problema("Todavía no está creada la base de pedidos.", 503);
+  const mal = revisarPedidos(request, env);
+  if (mal) return mal;
   await asegurarTablas(env.DB);
 
   let cuerpo;
