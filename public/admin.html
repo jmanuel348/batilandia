@@ -180,6 +180,10 @@ const recordar = (k,v) => { try{ localStorage.setItem(k,v); }catch(e){ memoria[k
 const recordado = k => { try{ return localStorage.getItem(k); }catch(e){ return memoria[k]||null; } };
 const olvidar = k => { try{ localStorage.removeItem(k); }catch(e){ delete memoria[k]; } };
 
+/* Carpeta del repositorio donde viven los archivos del sitio.
+   Si algún día los movés, cambiá solo esta línea. */
+const CARPETA = "public/";
+
 let REPO = "", TOKEN = "";
 let D = null;              // contenido completo
 let sucio = false;         // hay cambios sin publicar
@@ -224,7 +228,7 @@ const aBase64 = txt => btoa(unescape(encodeURIComponent(txt)));
 const deBase64 = b64 => decodeURIComponent(escape(atob(String(b64).replace(/\s/g,""))));
 
 async function leerDatos(){
-  const j = await gh("datos.json?t=" + Date.now(), { method:"GET", cache:"no-store" });
+  const j = await gh(CARPETA + "datos.json?t=" + Date.now(), { method:"GET", cache:"no-store" });
   return { datos: JSON.parse(deBase64(j.content)), sha: j.sha };
 }
 
@@ -263,9 +267,9 @@ function comprimir(archivo, lado, calidad){
 
 async function subirFoto(archivo, nombreBase){
   const b64 = await comprimir(archivo, 900, 0.82);
-  const ruta = "fotos/" + resbalar(nombreBase) + "-" + Date.now().toString(36) + ".jpg";
-  await escribirArchivo(ruta, b64, "Foto: " + nombreBase);
-  return ruta;
+  const rutaSitio = "fotos/" + resbalar(nombreBase) + "-" + Date.now().toString(36) + ".jpg";
+  await escribirArchivo(CARPETA + rutaSitio, b64, "Foto: " + nombreBase);
+  return rutaSitio;
 }
 
 /* =========================================================
@@ -320,7 +324,7 @@ $("#btn-guardar").addEventListener("click", async () => {
   b.disabled = true;
   $("#aviso-guardar").textContent = "Publicando…";
   try {
-    await escribirArchivo("datos.json", aBase64(JSON.stringify(D, null, 2)), "Actualización desde el panel");
+    await escribirArchivo(CARPETA + "datos.json", aBase64(JSON.stringify(D, null, 2)), "Actualización desde el panel");
     marcarLimpio("Publicado. El sitio se actualiza en un minuto.");
   } catch(e){
     $("#aviso-guardar").textContent = e.message;
