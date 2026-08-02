@@ -1,9 +1,33 @@
 {
+  // Le dice a Cloudflare qué publicar.
   "name": "batilandia",
   "compatibility_date": "2026-08-02",
+
+  // El servidor que guarda los pedidos. Vive en src/index.js.
+  "main": "src/index.js",
+
+  // La carpeta del sitio. El "binding" deja que el servidor
+  // la sirva; sin eso, el sitio no cargaría.
   "assets": {
-    "directory": "./public"
+    "directory": "./public",
+    "binding": "ASSETS"
   },
+
+  // ────────────────────────────────────────────────────────
+  // BASE DE PEDIDOS
+  // Mientras estas cinco líneas estén comentadas, el sitio
+  // funciona como siempre pero no guarda pedidos.
+  // Para prenderla: creá la base en Cloudflare (la guía tiene
+  // el paso a paso), pegá el id abajo y sacá las barras //.
+  // ────────────────────────────────────────────────────────
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "batilandia-pedidos",
+  //     "database_id": "PEGAR-ACA-EL-ID-QUE-DA-CLOUDFLARE"
+  //   }
+  // ],
+
   "observability": {
     "enabled": true
   }

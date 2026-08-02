@@ -53,9 +53,48 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--oro)}
 .boton.peligro{background:#fff;color:#B0303C;box-shadow:inset 0 0 0 2px #E3B9BB}
 .boton[disabled]{opacity:.5;cursor:not-allowed}
 
-.pestanas{display:flex;gap:6px;background:var(--rosa-suave);padding:5px;border-radius:14px;margin-bottom:18px}
-.pestanas button{flex:1;padding:10px;border-radius:10px;font-size:.94rem;font-weight:500;color:var(--vino)}
+.pestanas{display:flex;gap:5px;background:var(--rosa-suave);padding:5px;border-radius:14px;margin-bottom:18px}
+.pestanas button{flex:1;padding:10px 3px;border-radius:10px;font-size:.82rem;font-weight:500;color:var(--vino);white-space:nowrap}
 .pestanas button[aria-selected="true"]{background:var(--vino);color:#fff}
+.pestanas .pendientes{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:999px;background:var(--vino);color:#fff;font-size:.72rem;line-height:18px;vertical-align:1px}
+.pestanas button[aria-selected="true"] .pendientes{background:#fff;color:var(--vino)}
+
+/* ---------- pedidos ---------- */
+.resumen-dia{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.dato{background:#fff;border:2px solid var(--linea);border-radius:14px;padding:12px 14px}
+.dato b{display:block;font-size:1.45rem;font-weight:600;color:var(--vino);line-height:1.2}
+.dato small{font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta-suave);font-weight:500}
+
+.filtros{display:flex;gap:6px;margin-bottom:14px}
+.filtros button{flex:1;padding:9px 4px;border-radius:10px;background:var(--rosa-suave);color:var(--vino);font-size:.85rem;font-weight:500}
+.filtros button[aria-pressed="true"]{background:var(--vino);color:#fff}
+
+.pedido-caja{background:#fff;border:2px solid var(--linea);border-radius:16px;padding:14px;margin-bottom:10px}
+.pedido-caja.entregado,.pedido-caja.cancelado{opacity:.55}
+.pedido-tope{display:flex;align-items:baseline;gap:8px}
+.pedido-tope b{flex:1;font-weight:500;font-size:1.02rem}
+.pedido-tope .plata{font-weight:600;color:var(--vino);font-size:1.1rem;white-space:nowrap}
+.pedido-hora{font-size:.8rem;font-weight:300;color:var(--tinta-suave);margin:2px 0 9px}
+.etiqueta-estado{display:inline-block;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+  font-weight:500;padding:2px 8px;border-radius:999px;background:var(--rosa-suave);color:var(--tinta-suave)}
+.pedido-items{list-style:none;margin:0 0 9px;padding:0;font-size:.92rem;font-weight:300}
+.pedido-items li{display:flex;justify-content:space-between;gap:10px;padding:1px 0}
+.pedido-extra{font-size:.86rem;font-weight:300;color:var(--tinta-suave);margin:0 0 10px}
+.pedido-extra span{display:block}
+.pedido-acciones{display:flex;gap:8px}
+.pedido-acciones button{flex:1;padding:10px 6px;border-radius:10px;font-size:.86rem;font-weight:500}
+.pedido-acciones button[disabled]{opacity:.5}
+.b-entregado{background:#DFF2E4;color:#1E6B38}
+.b-cancelar{background:var(--rosa-suave);color:#B0303C}
+.b-volver{background:var(--rosa-suave);color:var(--vino)}
+
+.top-lista{list-style:none;margin:0;padding:0;counter-reset:t}
+.top-lista li{counter-increment:t;display:flex;align-items:center;gap:10px;padding:7px 0;
+  border-bottom:1px solid var(--linea);font-size:.95rem}
+.top-lista li:last-child{border-bottom:0}
+.top-lista li::before{content:counter(t);flex:0 0 24px;width:24px;height:24px;border-radius:50%;
+  background:var(--oro);color:var(--vino-osc);display:grid;place-items:center;font-size:.78rem;font-weight:600}
+.top-lista .cuantos{margin-left:auto;font-weight:500;color:var(--vino);white-space:nowrap}
 
 .encabezado-lista{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .encabezado-lista h2{flex:1;margin:0;font-family:"Yellowtail",cursive;font-size:1.7rem;font-weight:400;color:var(--vino)}
@@ -145,13 +184,18 @@ input[type=file]{display:none}
       <span>Llave de acceso</span>
       <input type="password" id="in-token" placeholder="github_pat_…" autocapitalize="off" autocorrect="off" spellcheck="false">
     </label>
+    <label class="campo">
+      <span>Clave de pedidos (opcional)</span>
+      <input type="password" id="in-clave" placeholder="Dejala vacía si todavía no la creaste" autocapitalize="off" autocorrect="off" spellcheck="false">
+    </label>
     <button class="boton" id="btn-entrar">Entrar</button>
   </section>
 
   <!-- ============ PANEL ============ -->
   <main id="panel" hidden>
     <div class="pestanas" role="tablist">
-      <button role="tab" data-t="batidos" aria-selected="true">Batidos</button>
+      <button role="tab" data-t="pedidos" aria-selected="true">Pedidos<span class="pendientes" id="contador-pendientes" hidden></span></button>
+      <button role="tab" data-t="batidos" aria-selected="false">Batidos</button>
       <button role="tab" data-t="categorias" aria-selected="false">Categorías</button>
       <button role="tab" data-t="negocio" aria-selected="false">Negocio</button>
     </div>
@@ -185,16 +229,55 @@ const olvidar = k => { try{ localStorage.removeItem(k); }catch(e){ delete memori
 const CARPETA = "public/";
 
 let REPO = "", TOKEN = "";
+let CLAVE = "";            // clave del servidor de pedidos
 let D = null;              // contenido completo
 let sucio = false;         // hay cambios sin publicar
-let vistaActual = "batidos";
+let vistaActual = "pedidos";
 let filtroTexto = "";
+let filtroPedidos = "nuevo";
 
 const $ = s => document.querySelector(s);
 const escapar = t => String(t==null?"":t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const idNuevo = pre => pre + Date.now().toString(36) + Math.floor(Math.random()*90+10);
 const babel = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const resbalar = s => babel(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "foto";
+
+/* =========================================================
+   El vaso dibujado
+   El mismo que usa el sitio cuando un batido no tiene foto,
+   para que acá los veas igual que tus clientes.
+   ========================================================= */
+const TONOS = [
+  ["oreo","#3E3238"],["galleta","#8A6236"],["caramelo","#C97B33"],["capuccino","#8A5A32"],
+  ["moka","#6E4326"],["pinguino","#4A3F45"],["chocolate","#6B3A24"],["fresa","#E8546B"],
+  ["banano","#F3C63E"],["ciruela","#7B3F6B"],["arandanos","#5C4A8C"],["vainilla","#F0E0B8"],
+  ["sandia","#E85F55"],["papaya","#F0913C"],["manzana","#9CC63E"],["melon","#F5A65B"],
+  ["coco","#F6EFE2"],["mani","#C89A5B"],["nancite","#E8C24A"],["pina","#F2D34B"],
+  ["mixta","#C98B6B"],["mixto","#C98B6B"],["leche","#F7F0E4"],["pasa","#6E4A6E"],
+  ["ron","#8A5A3C"],["sencillo","#CBAB8C"],["verde","#7FB83E"],["tropical","#F4A03C"],
+  ["fruti","#E8546B"],["verano","#F26D5B"]
+];
+let contadorVaso = 0;
+function vasoSVG(nombre, cat){
+  const n = babel(nombre||""), hallados = [];
+  for (const [k,c] of TONOS){
+    if (n.includes(k) && !hallados.includes(c)) hallados.push(c);
+    if (hallados.length === 2) break;
+  }
+  if (!hallados.length) hallados.push("#EF7D8C");
+  if (hallados.length === 1) hallados.push(hallados[0]);
+  const [a,b] = hallados, id = "va" + (contadorVaso++);
+  const cuerpo = "M10 18 H34 L30.5 51 A3 3 0 0 1 27.5 54 H16.5 A3 3 0 0 1 13.5 51 Z";
+  const copete = cat === "smoothies"
+    ? '<circle cx="22" cy="12" r="5" fill="#8FBF4A"/><path d="M22 12 q6 -5 9 -2 q-3 5 -9 2Z" fill="#B5D96B"/>'
+    : '<path d="M11.5 18 q2.5 -8 6 -8 q1.5 -4 5 -2 q4 -1 4.6 3.4 q2.4 2.6 1.4 6.6 Z" fill="#FFF6EC"/>';
+  return '<svg viewBox="0 0 44 56" aria-hidden="true" style="width:100%;height:100%;padding:3px">' +
+    '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="'+b+'"/><stop offset="60%" stop-color="'+a+'"/></linearGradient></defs>' +
+    '<path d="'+cuerpo+'" fill="url(#'+id+')"/>' + copete +
+    '<path d="'+cuerpo+'" fill="none" stroke="#7C0C17" stroke-opacity=".28" stroke-width="1.8" stroke-linejoin="round"/>' +
+    '<rect x="23" y="1" width="4" height="17" rx="2" fill="#E4B04A" transform="rotate(15 25 9)"/></svg>';
+}
 
 function mensaje(donde, texto, tipo){
   const c = $(donde);
@@ -221,6 +304,24 @@ async function gh(ruta, opciones){
     if (r.status === 404) throw new Error("No se encontró el repositorio o el archivo. Revisá que el nombre esté bien escrito.");
     throw new Error("GitHub respondió " + r.status + (detalle ? ": " + detalle : ""));
   }
+  return r.json();
+}
+
+/* =========================================================
+   Servidor de pedidos
+   Vive en el mismo sitio, bajo /api. La clave se pone al entrar.
+   ========================================================= */
+async function api(ruta, opciones){
+  const r = await fetch("/api" + ruta, Object.assign({}, opciones, {
+    headers: Object.assign({
+      "Authorization": "Bearer " + CLAVE,
+      "content-type": "application/json"
+    }, (opciones && opciones.headers) || {})
+  }));
+  if (r.status === 401) throw new Error("La clave de pedidos no es correcta.");
+  if (r.status === 404) throw new Error("No encontré el servidor de pedidos. Si estás viendo el sitio en local, esto solo funciona en el sitio publicado.");
+  if (r.status === 503) throw new Error("Todavía no está creada la base de pedidos en Cloudflare. La guía tiene el paso a paso.");
+  if (!r.ok) throw new Error("El servidor respondió " + r.status + ".");
   return r.json();
 }
 
@@ -275,26 +376,29 @@ async function subirFoto(archivo, nombreBase){
 /* =========================================================
    Entrar / salir
    ========================================================= */
-async function entrar(repo, token){
+async function entrar(repo, token, clave){
   REPO = repo.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,"");
   TOKEN = token.trim();
+  CLAVE = (clave || "").trim();
   const r = await leerDatos();
   D = r.datos;
   recordar("bati_repo", REPO);
   recordar("bati_token", TOKEN);
+  if (CLAVE) recordar("bati_clave", CLAVE); else olvidar("bati_clave");
   $("#entrar").hidden = true;
   $("#panel").hidden = false;
   $("#barra").hidden = false;
   $("#salir").hidden = false;
-  pintar();
+  /* Sin clave, la pestaña de pedidos no sirve: arrancamos en Batidos */
+  seleccionarPestana(CLAVE ? "pedidos" : "batidos");
 }
 
 $("#btn-entrar").addEventListener("click", async () => {
-  const repo = $("#in-repo").value, token = $("#in-token").value;
+  const repo = $("#in-repo").value, token = $("#in-token").value, clave = $("#in-clave").value;
   if (!repo || !token){ mensaje("#msg-entrar","Faltan datos: escribí el repositorio y la llave.","error"); return; }
   mensaje("#msg-entrar","Conectando…","trabajando");
   $("#btn-entrar").disabled = true;
-  try { await entrar(repo, token); mensaje("#msg-entrar","",""); }
+  try { await entrar(repo, token, clave); mensaje("#msg-entrar","",""); }
   catch(e){ mensaje("#msg-entrar", e.message, "error"); }
   $("#btn-entrar").disabled = false;
 });
@@ -302,6 +406,7 @@ $("#btn-entrar").addEventListener("click", async () => {
 $("#salir").addEventListener("click", () => {
   if (sucio && !confirm("Tenés cambios sin publicar. ¿Salir de todos modos?")) return;
   olvidar("bati_token");
+  olvidar("bati_clave");
   location.reload();
 });
 
@@ -338,17 +443,120 @@ window.addEventListener("beforeunload", e => { if (sucio){ e.preventDefault(); e
    Pestañas
    ========================================================= */
 document.querySelectorAll(".pestanas button").forEach(b => {
-  b.addEventListener("click", () => {
-    vistaActual = b.dataset.t;
-    document.querySelectorAll(".pestanas button").forEach(x => x.setAttribute("aria-selected", x === b));
-    pintar();
-  });
+  b.addEventListener("click", () => seleccionarPestana(b.dataset.t));
 });
 
+function seleccionarPestana(nombre){
+  vistaActual = nombre;
+  document.querySelectorAll(".pestanas button").forEach(x =>
+    x.setAttribute("aria-selected", x.dataset.t === nombre));
+  pintar();
+}
+
 function pintar(){
-  if (vistaActual === "batidos") pintarBatidos();
+  if (vistaActual === "pedidos") pintarPedidos();
+  else if (vistaActual === "batidos") pintarBatidos();
   else if (vistaActual === "categorias") pintarCategorias();
   else pintarNegocio();
+}
+
+/* =========================================================
+   Pedidos
+   ========================================================= */
+const TITULO_PEDIDOS = '<div class="encabezado-lista"><h2>Pedidos</h2>' +
+  '<button class="boton fantasma" data-recargar>Actualizar</button></div>';
+
+/* Hora si es de hoy, día y hora si es más viejo */
+function cuando(ms){
+  const d = new Date(ms);
+  const hora = d.toLocaleTimeString("es-NI", { hour:"numeric", minute:"2-digit" });
+  if (d.toDateString() === new Date().toDateString()) return hora;
+  return d.toLocaleDateString("es-NI", { day:"numeric", month:"short" }) + " · " + hora;
+}
+
+function contadorPendientes(cuantos){
+  const c = $("#contador-pendientes");
+  c.textContent = cuantos || "";
+  c.hidden = !cuantos;
+}
+
+function tarjetaPedido(p){
+  const items = p.items.map(i =>
+    '<li><span>'+i.cantidad+'× '+escapar(i.nombre)+'</span><span>C$'+(i.precio*i.cantidad)+'</span></li>'
+  ).join("");
+
+  const extra = (p.direccion || p.nota)
+    ? '<p class="pedido-extra">' +
+      (p.direccion ? '<span>Entrega: '+escapar(p.direccion)+'</span>' : '') +
+      (p.nota      ? '<span>Nota: '+escapar(p.nota)+'</span>' : '') + '</p>'
+    : '';
+
+  const acciones = p.estado === "nuevo"
+    ? '<button class="b-entregado" data-estado="entregado" data-pedido="'+p.id+'">Entregado</button>' +
+      '<button class="b-cancelar" data-estado="cancelado" data-pedido="'+p.id+'">No se concretó</button>'
+    : '<button class="b-volver" data-estado="nuevo" data-pedido="'+p.id+'">Volver a sin confirmar</button>';
+
+  return '<div class="pedido-caja '+escapar(p.estado)+'">' +
+    '<div class="pedido-tope"><b>'+escapar(p.cliente || "Sin nombre")+'</b>' +
+      '<span class="plata">C$'+p.total+'</span></div>' +
+    '<p class="pedido-hora">'+cuando(p.creado)+' · '+p.unidades+(p.unidades === 1 ? ' batido' : ' batidos') +
+      (p.estado === "nuevo" ? '' : ' <span class="etiqueta-estado">'+escapar(p.estado)+'</span>') + '</p>' +
+    '<ul class="pedido-items">'+items+'</ul>' + extra +
+    '<div class="pedido-acciones">'+acciones+'</div></div>';
+}
+
+async function pintarPedidos(){
+  if (!CLAVE){
+    $("#vista").innerHTML = TITULO_PEDIDOS +
+      '<div class="caja"><p class="ayuda" style="margin:0">Todavía no pusiste la clave de pedidos. ' +
+      'Tocá <b>Salir</b> y volvé a entrar escribiéndola en el tercer campo. ' +
+      'Si todavía no la creaste, la guía explica cómo.</p></div>';
+    contadorPendientes(0);
+    return;
+  }
+
+  $("#vista").innerHTML = TITULO_PEDIDOS + '<p class="vacio-lista">Buscando pedidos…</p>';
+
+  let d;
+  try { d = await api("/pedidos?estado=" + filtroPedidos); }
+  catch(e){
+    $("#vista").innerHTML = TITULO_PEDIDOS + '<div class="mensaje error">'+escapar(e.message)+'</div>';
+    return;
+  }
+  if (vistaActual !== "pedidos") return;   // cambió de pestaña mientras cargaba
+
+  const r = d.resumen;
+  contadorPendientes(r.sinConfirmar);
+
+  const etiquetas = { nuevo:"Sin confirmar", entregado:"Entregados", todos:"Todos" };
+  let html = TITULO_PEDIDOS +
+    '<div class="resumen-dia">' +
+      '<div class="dato"><b>'+r.hoyCuantos+'</b><small>Entregados hoy</small></div>' +
+      '<div class="dato"><b>C$'+r.hoyPlata+'</b><small>Vendido hoy</small></div>' +
+    '</div>' +
+    '<div class="filtros">' + Object.keys(etiquetas).map(k =>
+      '<button data-filtro="'+k+'" aria-pressed="'+(k === filtroPedidos)+'">'+etiquetas[k]+
+      (k === "nuevo" && r.sinConfirmar ? ' ('+r.sinConfirmar+')' : '')+'</button>'
+    ).join("") + '</div>';
+
+  html += d.pedidos.length
+    ? d.pedidos.map(tarjetaPedido).join("")
+    : '<p class="vacio-lista">' + (filtroPedidos === "nuevo"
+        ? "Ningún pedido esperando confirmación."
+        : "Todavía no hay pedidos acá.") + '</p>';
+
+  html += '<div class="encabezado-lista" style="margin-top:24px"><h2>Lo que más se vende</h2></div>';
+  html += d.top.length
+    ? '<div class="caja"><ul class="top-lista">' + d.top.map(t =>
+        '<li>'+escapar(t.nombre)+'<span class="cuantos">'+t.vendidos+'</span></li>'
+      ).join("") + '</ul>' +
+      '<p class="ayuda" style="margin:12px 0 0">Últimos '+r.dias+' días, contando solo los pedidos que confirmaste ' +
+      'como entregados, y desde '+r.minimo+' vendidos para arriba. Estos salen marcados como <b>populares</b> ' +
+      'en el sitio, solos, sin que tengas que publicar nada.</p></div>'
+    : '<div class="caja"><p class="ayuda" style="margin:0">Todavía no confirmaste ninguna entrega. ' +
+      'Apenas confirmes las primeras, acá aparece el ranking y el sitio empieza a marcar solo los más pedidos.</p></div>';
+
+  $("#vista").innerHTML = html;
 }
 
 /* =========================================================
@@ -369,8 +577,8 @@ function pintarBatidos(){
     html += '<div class="grupo-cat"><h3>'+escapar(cat.nombre)+' · '+items.length+'</h3>';
     items.forEach(p => {
       const mini = p.foto
-        ? '<img src="'+escapar(p.foto)+'" alt="">'
-        : '<span aria-hidden="true">🥤</span>';
+        ? '<img src="'+escapar(p.foto)+'" alt="" data-pid="'+p.id+'">'
+        : vasoSVG(p.nombre, p.cat);
       html += '<div class="tarjeta-item'+(p.agotado?' agotado':'')+'">' +
         '<span class="miniatura">'+mini+'</span>' +
         '<button class="centro" style="text-align:left" data-editar="'+p.id+'">' +
@@ -386,6 +594,12 @@ function pintarBatidos(){
   });
 
   $("#vista").innerHTML = html;
+  document.querySelectorAll(".miniatura img").forEach(img => {
+    img.addEventListener("error", () => {
+      const p = D.productos.find(x => x.id === img.dataset.pid);
+      img.parentNode.innerHTML = p ? vasoSVG(p.nombre, p.cat) : vasoSVG("", "");
+    });
+  });
   const f = $("#filtro");
   if (f) f.addEventListener("input", e => { filtroTexto = e.target.value; pintarBatidos(); $("#filtro").focus(); });
 }
@@ -397,7 +611,7 @@ function formularioProducto(p){
     '<h2>'+(nuevo?"Nuevo batido":"Editar batido")+'</h2>' +
     '<div id="msg-modal"></div>' +
     '<div class="previo">' +
-      '<span class="cuadro" id="previo-foto">'+(p.foto?'<img src="'+escapar(p.foto)+'" alt="">':'🥤')+'</span>' +
+      '<span class="cuadro" id="previo-foto">'+(p.foto?'<img src="'+escapar(p.foto)+'" alt="">':vasoSVG(p.nombre,p.cat))+'</span>' +
       '<span class="lado">' +
         '<button type="button" id="btn-foto">Elegir foto</button>' +
         '<button type="button" id="btn-sinfoto">Quitar foto</button>' +
@@ -423,7 +637,7 @@ function formularioProducto(p){
   $("#btn-foto").addEventListener("click", () => $("#archivo-foto").click());
   $("#btn-sinfoto").addEventListener("click", () => {
     fotoNueva = null; fotoActual = "";
-    $("#previo-foto").innerHTML = "🥤";
+    $("#previo-foto").innerHTML = vasoSVG($("#f-nombre").value || p.nombre, $("#f-cat").value);
   });
   $("#archivo-foto").addEventListener("change", e => {
     const a = e.target.files[0];
@@ -591,6 +805,26 @@ $("#velo").addEventListener("click", cerrarModal);
    ========================================================= */
 document.addEventListener("click", e => {
   if (e.target.closest("[data-cerrar]")) return cerrarModal();
+
+  if (e.target.closest("[data-recargar]")) return pintarPedidos();
+
+  const filtro = e.target.closest("[data-filtro]");
+  if (filtro){ filtroPedidos = filtro.dataset.filtro; return pintarPedidos(); }
+
+  const cambio = e.target.closest("[data-estado]");
+  if (cambio){
+    const caja = cambio.closest(".pedido-caja");
+    if (caja) caja.querySelectorAll("button").forEach(b => b.disabled = true);
+    api("/pedidos/" + cambio.dataset.pedido, {
+      method: "PATCH",
+      body: JSON.stringify({ estado: cambio.dataset.estado })
+    }).then(pintarPedidos).catch(err => {
+      alert(err.message);
+      if (caja) caja.querySelectorAll("button").forEach(b => b.disabled = false);
+    });
+    return;
+  }
+
   if (e.target.closest("[data-nuevo-producto]")){
     if (!D.categorias.length) return alert("Primero creá una categoría.");
     return formularioProducto(null);
@@ -620,11 +854,11 @@ document.addEventListener("click", e => {
    Arranque: si ya entró antes, reconecta solo
    ========================================================= */
 (async function(){
-  const r = recordado("bati_repo"), t = recordado("bati_token");
+  const r = recordado("bati_repo"), t = recordado("bati_token"), c = recordado("bati_clave");
   if (!r || !t) return;
   $("#in-repo").value = r;
   mensaje("#msg-entrar","Conectando…","trabajando");
-  try { await entrar(r, t); mensaje("#msg-entrar","",""); }
+  try { await entrar(r, t, c); mensaje("#msg-entrar","",""); }
   catch(e){ mensaje("#msg-entrar", e.message + " Volvé a entrar.", "error"); olvidar("bati_token"); }
 })();
 </script>
