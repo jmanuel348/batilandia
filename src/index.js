@@ -48,10 +48,16 @@ function faltaConfigurar(env){
 }
 
 async function github(env, ruta, opciones){
-  const url = "https://api.github.com/repos/" + env.GITHUB_REPO + "/contents/" + ruta;
+  /* Al pegar en Cloudflare es fácil que se cuele un espacio o un salto
+     de línea al final. GitHub lo rechaza como si el token fuera falso. */
+  const token = String(env.GITHUB_TOKEN || "").trim();
+  const repo = String(env.GITHUB_REPO || "").trim()
+    .replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/^\/+|\/+$/g, "");
+
+  const url = "https://api.github.com/repos/" + repo + "/contents/" + ruta;
   const r = await fetch(url, Object.assign({}, opciones, {
     headers: Object.assign({
-      "Authorization": "Bearer " + env.GITHUB_TOKEN,
+      "Authorization": "Bearer " + token,
       "Accept": "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
       "User-Agent": "batilandia"
@@ -60,8 +66,15 @@ async function github(env, ruta, opciones){
   if (!r.ok){
     let detalle = "";
     try { detalle = (await r.json()).message || ""; } catch(e){}
-    if (r.status === 401) throw new Error("La llave de GitHub guardada en Cloudflare no sirve o ya venció.");
-    if (r.status === 404) throw new Error("No se encontró el repositorio o el archivo. Revisá GITHUB_REPO.");
+    if (r.status === 401) throw new Error(
+      "GitHub rechaza la llave. Suele ser que GITHUB_TOKEN quedó cortada al pegarla, " +
+      "o que ya venció. Generá una nueva y reemplazá el secreto en Cloudflare.");
+    if (r.status === 403) throw new Error(
+      "La llave de GitHub no tiene permiso de escritura sobre el repositorio. " +
+      "Al generarla hay que darle Contents: Read and write.");
+    if (r.status === 404) throw new Error(
+      "No se encontró «" + repo + "». Puede ser que GITHUB_REPO esté mal escrito, " +
+      "o que la llave no tenga acceso a ese repositorio.");
     throw new Error("GitHub respondió " + r.status + (detalle ? ": " + detalle : ""));
   }
   return r.json();
