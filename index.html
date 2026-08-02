@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Batilandia — Batidos en Santo Tomás</title>
+<meta name="description" content="Frappés, milkshakes y smoothies en Santo Tomás. Elegí tus batidos y mandá el pedido por WhatsApp.">
+<meta property="og:title" content="Batilandia — Batidos en Santo Tomás">
+<meta property="og:description" content="Frappés, milkshakes y smoothies. Pedí por WhatsApp.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#A4121F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%A4%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Fredoka:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   BATILANDIA — sitio público
+   El contenido NO se edita aquí: se edita en el panel,
+   que guarda todo en datos.json.
+   ========================================================= */
+:root{
+  --rosa:#F9C6C2; --rosa-suave:#FDE4E1; --crema:#FFF9F6;
+  --vino:#A4121F; --vino-osc:#7C0C17; --oro:#E4B04A;
+  --tinta:#5A2A2E; --tinta-suave:#8E5A5E;
+  --radio:16px; --sombra:0 6px 20px rgba(124,12,23,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--rosa); color:var(--tinta);
+  font-family:"Fredoka",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-weight:400; line-height:1.5; -webkit-font-smoothing:antialiased;
+  padding-bottom:96px;
+}
+img,svg{display:block;max-width:100%}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+a{color:inherit}
+
+.lunares{background-image:radial-gradient(rgba(255,255,255,.55) 1.6px,transparent 1.7px);background-size:22px 22px}
+
+/* ---------- portada ---------- */
+.portada{position:relative;padding:40px 20px 0;text-align:center;overflow:hidden}
+.marca{
+  font-family:"Yellowtail",cursive;
+  font-size:clamp(3.4rem,17vw,5.6rem);
+  line-height:.95;color:var(--vino);margin:0;
+  text-shadow:2px 3px 0 rgba(255,255,255,.6);
+}
+.lema{font-size:1.05rem;font-weight:300;color:var(--tinta-suave);margin:10px auto 0;max-width:26ch}
+.estado{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:16px;padding:8px 18px;border-radius:999px;
+  background:rgba(255,255,255,.8);font-size:.9rem;font-weight:400;
+}
+.estado i{width:9px;height:9px;border-radius:50%;background:#2FA84F;flex:0 0 auto}
+.estado.cerrado i{background:#B9424B}
+.acciones{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:20px 0 8px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 24px;border-radius:999px;font-weight:500;text-decoration:none;
+  transition:transform .15s ease;
+}
+.btn:hover{transform:translateY(-2px)}
+.btn-lleno{background:var(--vino);color:#fff;box-shadow:var(--sombra)}
+.btn-borde{background:rgba(255,255,255,.75);color:var(--vino);box-shadow:inset 0 0 0 2px var(--vino)}
+.dato-portada{margin:16px 0 0;font-size:.9rem;font-weight:300;color:var(--tinta-suave)}
+.ola{width:100%;height:52px;margin-top:22px}
+
+/* ---------- barra ---------- */
+.barra{position:sticky;top:0;z-index:30;background:var(--crema);padding:12px 16px 10px;box-shadow:0 4px 14px rgba(124,12,23,.08)}
+.buscar{position:relative;max-width:640px;margin:0 auto 10px}
+.buscar input{
+  width:100%;padding:11px 16px 11px 42px;border-radius:999px;
+  border:2px solid var(--rosa-suave);background:#fff;
+  font-family:inherit;font-size:1rem;color:var(--tinta);
+}
+.buscar input::placeholder{color:#C39B9E}
+.buscar input:focus{outline:none;border-color:var(--oro)}
+.buscar svg{position:absolute;left:15px;top:12px;width:18px;height:18px;opacity:.45}
+.chips{display:flex;gap:8px;overflow-x:auto;max-width:640px;margin:0 auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;padding:8px 16px;border-radius:999px;background:var(--rosa-suave);color:var(--vino);font-size:.92rem;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--vino);color:#fff}
+
+/* ---------- menú ---------- */
+.menu{background:var(--crema);padding:8px 16px 40px;min-height:40vh}
+.grupo{max-width:860px;margin:0 auto 30px}
+.cinta-caja{display:flex;justify-content:center;margin:26px 0 6px}
+.cinta{
+  position:relative;background:var(--vino);color:#fff;
+  font-family:"Yellowtail",cursive;font-size:1.7rem;line-height:1;
+  padding:12px 30px 16px;border-radius:8px;
+}
+.cinta::before,.cinta::after{content:"";position:absolute;top:8px;width:18px;height:calc(100% - 16px);background:var(--vino-osc)}
+.cinta::before{left:-14px;clip-path:polygon(100% 0,100% 100%,0 78%,0 22%)}
+.cinta::after{right:-14px;clip-path:polygon(0 0,0 100%,100% 78%,100% 22%)}
+.cat-desc{text-align:center;font-weight:300;color:var(--tinta-suave);margin:0 0 16px;font-size:.95rem}
+.lista{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+@media (min-width:760px){.lista{grid-template-columns:1fr 1fr;column-gap:30px}}
+.fila{display:flex;align-items:center;gap:12px;padding:8px 6px;border-radius:14px;transition:background .15s ease}
+.fila:hover{background:var(--rosa-suave)}
+.fila.sin-stock{opacity:.55}
+.mini{flex:0 0 56px;width:56px;height:56px;border-radius:14px;overflow:hidden;background:var(--rosa-suave);box-shadow:0 0 0 2px rgba(228,176,74,.45)}
+.mini img{width:100%;height:100%;object-fit:cover}
+.mini svg{width:100%;height:100%;padding:4px}
+.centro{flex:1;min-width:0}
+.linea{display:flex;align-items:baseline;gap:6px}
+.nombre{font-weight:400;font-size:1.02rem}
+.puntos{flex:1;min-width:12px;border-bottom:2px dotted #E3B9BB;transform:translateY(-4px)}
+.precio{font-weight:600;color:var(--vino);white-space:nowrap}
+.desc{display:block;font-size:.84rem;font-weight:300;color:var(--tinta-suave);margin-top:1px;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sello{
+  display:inline-block;font-size:.66rem;font-weight:500;letter-spacing:.06em;
+  text-transform:uppercase;padding:2px 8px;border-radius:999px;vertical-align:2px;margin-left:6px;
+}
+.sello.pop{background:var(--oro);color:var(--vino-osc)}
+.sello.ago{background:#E0D3D3;color:#7A5A5C}
+.mas{flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:var(--vino);color:#fff;font-size:1.35rem;line-height:1;display:grid;place-items:center;transition:transform .15s ease}
+.mas:hover{transform:scale(1.08)}
+.mas[disabled]{background:#D9C6C6;cursor:not-allowed;transform:none}
+.paso-cant{display:flex;align-items:center;gap:2px;background:var(--vino);color:#fff;border-radius:999px;padding:2px}
+.paso-cant button{width:32px;height:32px;border-radius:50%;font-size:1.2rem;line-height:1;display:grid;place-items:center}
+.paso-cant button:hover{background:rgba(255,255,255,.18)}
+.paso-cant span{min-width:20px;text-align:center;font-weight:600;font-size:.95rem}
+.vacio{text-align:center;color:var(--tinta-suave);font-weight:300;padding:40px 10px}
+
+/* ---------- pasos y visita ---------- */
+.pasos{padding:44px 20px 10px;max-width:860px;margin:0 auto}
+.titulo{font-family:"Yellowtail",cursive;color:var(--vino);font-size:2.1rem;text-align:center;margin:0 0 22px}
+.pasos ol{list-style:none;counter-reset:p;margin:0;padding:0;display:grid;gap:14px}
+@media (min-width:720px){.pasos ol{grid-template-columns:repeat(3,1fr)}}
+.pasos li{counter-increment:p;background:rgba(255,255,255,.6);border-radius:var(--radio);padding:18px 18px 18px 56px;position:relative;font-weight:300}
+.pasos li::before{content:counter(p);position:absolute;left:16px;top:16px;width:28px;height:28px;border-radius:50%;background:var(--oro);color:var(--vino-osc);font-weight:600;display:grid;place-items:center;font-size:.95rem}
+.pasos b{display:block;font-weight:500;color:var(--vino)}
+.visita{padding:34px 20px 44px;max-width:860px;margin:0 auto;text-align:center}
+.tarjetas{display:grid;gap:12px;margin-top:6px}
+@media (min-width:600px){.tarjetas{grid-template-columns:1fr 1fr}}
+.tarjeta{background:rgba(255,255,255,.6);border-radius:var(--radio);padding:18px;text-align:left}
+.tarjeta h3{margin:0 0 6px;font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--tinta-suave)}
+.tarjeta p{margin:0;font-weight:400}
+.horario-lista{list-style:none;margin:0;padding:0;font-weight:300;font-size:.95rem}
+.horario-lista li{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
+.horario-lista li.hoy{font-weight:500;color:var(--vino)}
+
+/* ---------- pie ---------- */
+.pie{background:var(--vino);color:#fff;text-align:center;padding:34px 20px 30px}
+.pie .marca-pie{font-family:"Yellowtail",cursive;font-size:2.4rem;margin:0 0 12px}
+.enlaces{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.enlaces a{text-decoration:none;background:rgba(255,255,255,.14);padding:10px 20px;border-radius:999px;font-size:.95rem}
+.enlaces a:hover{background:rgba(255,255,255,.26)}
+.pie small{display:block;opacity:.7;font-weight:300}
+
+/* ---------- pedido ---------- */
+.flotante{
+  position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(140%);
+  z-index:40;display:flex;align-items:center;gap:12px;
+  background:var(--vino);color:#fff;padding:9px 20px 9px 12px;border-radius:999px;
+  box-shadow:0 10px 26px rgba(124,12,23,.34);
+  transition:transform .3s cubic-bezier(.2,.9,.3,1.2);width:min(92vw,420px);
+}
+.flotante.visible{transform:translateX(-50%) translateY(0)}
+.flotante .resumen{flex:1;text-align:left;line-height:1.25}
+.flotante .resumen b{display:block;font-weight:500;font-size:1.05rem}
+.flotante .resumen span{font-size:.83rem;opacity:.8;font-weight:300}
+.flotante .ir{background:#fff;color:var(--vino);padding:10px 18px;border-radius:999px;font-weight:500;font-size:.95rem}
+.velo{position:fixed;inset:0;z-index:50;background:rgba(60,10,16,.5);opacity:0;pointer-events:none;transition:opacity .25s ease}
+.velo.abierto{opacity:1;pointer-events:auto}
+.hoja{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--crema);
+  border-radius:22px 22px 0 0;padding:10px 20px 26px;max-height:88vh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.9,.3,1);
+  max-width:560px;margin:0 auto;
+}
+.hoja.abierto{transform:translateY(0)}
+.agarre{width:44px;height:5px;border-radius:3px;background:#E3B9BB;margin:0 auto 14px}
+.hoja h2{font-family:"Yellowtail",cursive;color:var(--vino);font-size:1.9rem;margin:0 0 14px;text-align:center}
+.aviso{background:#FBE9D6;color:#8A5A22;border-radius:12px;padding:10px 14px;font-size:.88rem;font-weight:300;margin-bottom:14px;text-align:center}
+.pedido{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:8px}
+.pedido li{display:flex;align-items:center;gap:10px}
+.pedido .p-nom{flex:1;font-size:.98rem}
+.pedido .p-sub{font-weight:600;color:var(--vino);white-space:nowrap;min-width:60px;text-align:right}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:2px dotted #E3B9BB;padding-top:12px;margin-bottom:16px;font-size:1.15rem}
+.total b{color:var(--vino);font-size:1.4rem}
+.campo{margin-bottom:12px}
+.campo label{display:block;font-size:.83rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-suave);margin-bottom:5px;font-weight:500}
+.campo input,.campo textarea{
+  width:100%;padding:11px 14px;border-radius:12px;border:2px solid var(--rosa-suave);
+  background:#fff;font-family:inherit;font-size:1rem;color:var(--tinta);resize:vertical;
+}
+.campo input:focus,.campo textarea:focus{outline:none;border-color:var(--oro)}
+.enviar{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;background:#1FA855;color:#fff;padding:15px;border-radius:14px;font-size:1.05rem;font-weight:500;text-decoration:none;margin-top:6px}
+.enviar:hover{background:#188A45}
+.nota-hoja{text-align:center;font-size:.82rem;font-weight:300;color:var(--tinta-suave);margin:10px 0 0}
+.cerrar{position:absolute;right:16px;top:14px;width:32px;height:32px;border-radius:50%;background:var(--rosa-suave);color:var(--vino);display:grid;place-items:center;font-size:1.1rem}
+
+:focus-visible{outline:3px solid var(--oro);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+
+<body>
+
+<header class="portada lunares">
+  <h1 class="marca" id="marca">Batilandia</h1>
+  <p class="lema" id="lema"></p>
+  <div class="estado" id="estado" hidden><i></i><span id="estado-txt"></span></div>
+  <div class="acciones">
+    <a class="btn btn-lleno" href="#menu">Ver el menú</a>
+    <a class="btn btn-borde" id="wa-directo" href="#">Escribir por WhatsApp</a>
+  </div>
+  <p class="dato-portada" id="dato-portada"></p>
+  <svg class="ola" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,34 C150,4 260,58 420,32 C580,6 700,52 860,30 C1000,10 1100,44 1200,26"
+          fill="none" stroke="#E4B04A" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+</header>
+
+<div class="barra">
+  <div class="buscar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A5E" stroke-width="2.2" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6" stroke-linecap="round"/>
+    </svg>
+    <input id="buscador" type="search" placeholder="Buscar batido…" aria-label="Buscar batido">
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="Categorías"></div>
+</div>
+
+<main>
+  <section class="menu" id="menu"><p class="vacio">Cargando el menú…</p></section>
+
+  <section class="pasos">
+    <h2 class="titulo">Así se pide</h2>
+    <ol>
+      <li><b>Elegí</b> Tocá el + en cada batido que querés. Podés pedir varios del mismo.</li>
+      <li><b>Revisá</b> Abrí tu pedido y ajustá las cantidades si hace falta.</li>
+      <li><b>Mandalo</b> El pedido se abre en WhatsApp ya escrito. Solo le das enviar.</li>
+    </ol>
+  </section>
+
+  <section class="visita">
+    <h2 class="titulo">Dónde estamos</h2>
+    <div class="tarjetas">
+      <div class="tarjeta">
+        <h3>Dirección</h3>
+        <p id="v-direccion"></p>
+      </div>
+      <div class="tarjeta">
+        <h3>Horario</h3>
+        <ul class="horario-lista" id="v-horario"></ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="pie">
+  <p class="marca-pie" id="marca-pie">Batilandia</p>
+  <div class="enlaces">
+    <a id="pie-wa" href="#">WhatsApp</a>
+    <a id="pie-fb" href="#" target="_blank" rel="noopener" hidden>Facebook</a>
+  </div>
+  <small id="pie-nota"></small>
+</footer>
+
+<button class="flotante" id="flotante" aria-label="Ver mi pedido">
+  <svg viewBox="0 0 44 56" width="30" height="38" aria-hidden="true">
+    <defs><clipPath id="recorte"><path d="M10 18 H34 L30.5 51 A3 3 0 0 1 27.5 54 H16.5 A3 3 0 0 1 13.5 51 Z"/></clipPath></defs>
+    <path d="M10 18 H34 L30.5 51 A3 3 0 0 1 27.5 54 H16.5 A3 3 0 0 1 13.5 51 Z" fill="rgba(255,255,255,.22)"/>
+    <rect id="nivel" x="8" y="54" width="28" height="0" fill="#F9C6C2" clip-path="url(#recorte)"/>
+    <path d="M10 18 H34 L30.5 51 A3 3 0 0 1 27.5 54 H16.5 A3 3 0 0 1 13.5 51 Z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+    <rect x="23" y="1" width="4.4" height="17" rx="2.2" fill="#E4B04A" transform="rotate(15 25 9)"/>
+  </svg>
+  <span class="resumen"><b id="f-cant">0 batidos</b><span id="f-total">C$0</span></span>
+  <span class="ir">Ver pedido</span>
+</button>
+
+<div class="velo" id="velo"></div>
+
+<section class="hoja" id="hoja" role="dialog" aria-modal="true" aria-labelledby="titulo-hoja" aria-hidden="true">
+  <div class="agarre"></div>
+  <button class="cerrar" id="cerrar" aria-label="Cerrar">✕</button>
+  <h2 id="titulo-hoja">Tu pedido</h2>
+  <div class="aviso" id="aviso-cerrado" hidden></div>
+  <ul class="pedido" id="pedido"></ul>
+  <div class="total"><span>Total</span><b id="total">C$0</b></div>
+  <div class="campo">
+    <label for="c-nombre">Tu nombre (opcional)</label>
+    <input id="c-nombre" type="text" autocomplete="name" placeholder="Para saber de quién es el pedido">
+  </div>
+  <div class="campo" id="campo-entrega">
+    <label for="c-direccion">Dirección de entrega (opcional)</label>
+    <input id="c-direccion" type="text" placeholder="Si querés que te lo llevemos, escribí la dirección">
+  </div>
+  <div class="campo">
+    <label for="c-nota">Nota (opcional)</label>
+    <textarea id="c-nota" rows="2" placeholder="Sin azúcar, extra galleta, hora de retiro…"></textarea>
+  </div>
+  <a class="enviar" id="enviar" href="#" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" aria-hidden="true">
+      <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.5 14.1c-.2.6-1.2 1.2-1.7 1.2-.5.1-1 .1-1.6-.1a12 12 0 0 1-6.4-5.6c-.5-.9-.7-1.7-.6-2.4.1-.7.6-1.3 1-1.6.3-.2.7-.2 1 0l.9 1.9c.1.3.1.5-.1.8l-.4.5c-.2.2-.2.4-.1.6a8 8 0 0 0 3.5 3.1c.3.1.5.1.7-.1l.6-.7c.2-.2.4-.3.7-.2l1.9.9c.3.2.4.6.3 1Z"/>
+    </svg>
+    Enviar pedido por WhatsApp
+  </a>
+  <p class="nota-hoja">Se abre WhatsApp con el mensaje listo. Confirmamos por ahí mismo.</p>
+</section>
+
+<script>
+/* Copia de respaldo del contenido. Solo se usa si datos.json no carga. */
+const RESPALDO = {
+  "negocio": {
+    "nombre": "Batilandia",
+    "lema": "Deliciosos batidos, frappés y smoothies hechos al momento.",
+    "whatsapp": "50586914000",
+    "direccion": "Santo Tomás, Chontales",
+    "facebook": "",
+    "pedirDireccion": true
+  },
+  "horario": {
+    "zona": -6,
+    "dias": [
+      {
+        "nombre": "domingo",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "lunes",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "martes",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "miércoles",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "jueves",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "viernes",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "sábado",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      }
+    ]
+  },
+  "categorias": [
+    {
+      "id": "frappes",
+      "nombre": "Frappés",
+      "descripcion": "Batidos con hielo, cremosos y bien fríos."
+    },
+    {
+      "id": "milkshakes",
+      "nombre": "Milkshakes",
+      "descripcion": "Con leche y fruta fresca. Elegí tu combinación."
+    },
+    {
+      "id": "smoothies",
+      "nombre": "Smoothies",
+      "descripcion": "Solo fruta, sin leche. Livianos y refrescantes."
+    }
+  ],
+  "productos": [
+    {
+      "id": "p001",
+      "cat": "frappes",
+      "nombre": "Sencillo",
+      "precio": 120,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p002",
+      "cat": "frappes",
+      "nombre": "Caramelo",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p003",
+      "cat": "frappes",
+      "nombre": "Chocolate",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p004",
+      "cat": "frappes",
+      "nombre": "Oreo",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p005",
+      "cat": "frappes",
+      "nombre": "Banano",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p006",
+      "cat": "frappes",
+      "nombre": "Mixto",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p007",
+      "cat": "frappes",
+      "nombre": "Capuccino",
+      "precio": 140,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p008",
+      "cat": "frappes",
+      "nombre": "Moka",
+      "precio": 140,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p009",
+      "cat": "frappes",
+      "nombre": "Pingüino",
+      "precio": 140,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p010",
+      "cat": "milkshakes",
+      "nombre": "Fresa",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p011",
+      "cat": "milkshakes",
+      "nombre": "Banano",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p012",
+      "cat": "milkshakes",
+      "nombre": "Chocolate",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p013",
+      "cat": "milkshakes",
+      "nombre": "Ciruela",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p014",
+      "cat": "milkshakes",
+      "nombre": "Arándanos",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p015",
+      "cat": "milkshakes",
+      "nombre": "Banano Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p016",
+      "cat": "milkshakes",
+      "nombre": "Banano Vainilla",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p017",
+      "cat": "milkshakes",
+      "nombre": "Banano Caramelo",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p018",
+      "cat": "milkshakes",
+      "nombre": "Galleta Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p019",
+      "cat": "milkshakes",
+      "nombre": "Galleta Chocolate",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p020",
+      "cat": "milkshakes",
+      "nombre": "Galleta Banano",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p021",
+      "cat": "milkshakes",
+      "nombre": "Fresa Chocolate",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p022",
+      "cat": "milkshakes",
+      "nombre": "Sandía Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p023",
+      "cat": "milkshakes",
+      "nombre": "Papaya Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p024",
+      "cat": "milkshakes",
+      "nombre": "Nancite Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p025",
+      "cat": "milkshakes",
+      "nombre": "Piña Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p026",
+      "cat": "milkshakes",
+      "nombre": "Melón Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p027",
+      "cat": "milkshakes",
+      "nombre": "Coco Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p028",
+      "cat": "milkshakes",
+      "nombre": "Maní Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p029",
+      "cat": "milkshakes",
+      "nombre": "Manzana Fresa",
+      "precio": 110,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p030",
+      "cat": "milkshakes",
+      "nombre": "Banano Fresa Chocolate",
+      "precio": 110,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p031",
+      "cat": "milkshakes",
+      "nombre": "Galleta Fresa Chocolate",
+      "precio": 110,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p032",
+      "cat": "milkshakes",
+      "nombre": "Leche Mixta",
+      "precio": 120,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p033",
+      "cat": "milkshakes",
+      "nombre": "Ron con Pasa",
+      "precio": 120,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p034",
+      "cat": "smoothies",
+      "nombre": "Bati Fruti",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p035",
+      "cat": "smoothies",
+      "nombre": "Bati Tropical",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p036",
+      "cat": "smoothies",
+      "nombre": "Bati Verano",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p037",
+      "cat": "smoothies",
+      "nombre": "Bati Verde",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p038",
+      "cat": "smoothies",
+      "nombre": "Manzana Mix",
+      "precio": 110,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    }
+  ]
+};
+
+let D = RESPALDO;
+
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const cordobas = n => "C$" + n;
+const sinTildes = t => (t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const escapar = t => String(t||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function hora12(hhmm){
+  const [h,m] = (hhmm||"00:00").split(":").map(Number);
+  const suf = h >= 12 ? "p. m." : "a. m.";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return h12 + ":" + String(m).padStart(2,"0") + " " + suf;
+}
+const minutos = hhmm => { const [h,m] = (hhmm||"0:0").split(":").map(Number); return h*60+m; };
+
+function ahoraLocal(zona){
+  const d = new Date();
+  return new Date(d.getTime() + d.getTimezoneOffset()*60000 + (zona||0)*3600000);
+}
+
+function estadoHorario(){
+  const h = D.horario;
+  if (!h || !h.dias) return null;
+  const ahora = ahoraLocal(h.zona);
+  const hoy = ahora.getDay();
+  const min = ahora.getHours()*60 + ahora.getMinutes();
+  const d = h.dias[hoy];
+  if (d && d.abierto && min >= minutos(d.abre) && min < minutos(d.cierra)){
+    return { abierto:true, texto:"Abierto ahora · hasta las " + hora12(d.cierra), dia:hoy };
+  }
+  for (let i = 0; i < 8; i++){
+    const idx = (hoy + i) % 7;
+    const dd = h.dias[idx];
+    if (!dd || !dd.abierto) continue;
+    if (i === 0 && min >= minutos(dd.abre)) continue;
+    const cuando = i === 0 ? "hoy" : (i === 1 ? "mañana" : "el " + dd.nombre);
+    return { abierto:false, texto:"Cerrado · abrimos " + cuando + " a las " + hora12(dd.abre), dia:hoy };
+  }
+  return { abierto:false, texto:"Cerrado por ahora", dia:hoy };
+}
+
+/* ---------- vaso dibujado (cuando no hay foto) ---------- */
+const TONOS = [
+  ["oreo","#3E3238"],["galleta","#8A6236"],["caramelo","#C97B33"],["capuccino","#8A5A32"],
+  ["moka","#6E4326"],["pinguino","#4A3F45"],["chocolate","#6B3A24"],["fresa","#E8546B"],
+  ["banano","#F3C63E"],["ciruela","#7B3F6B"],["arandanos","#5C4A8C"],["vainilla","#F0E0B8"],
+  ["sandia","#E85F55"],["papaya","#F0913C"],["manzana","#9CC63E"],["melon","#F5A65B"],
+  ["coco","#F6EFE2"],["mani","#C89A5B"],["nancite","#E8C24A"],["pina","#F2D34B"],
+  ["mixta","#C98B6B"],["mixto","#C98B6B"],["leche","#F7F0E4"],["pasa","#6E4A6E"],
+  ["ron","#8A5A3C"],["sencillo","#CBAB8C"],["verde","#7FB83E"],["tropical","#F4A03C"],
+  ["fruti","#E8546B"],["verano","#F26D5B"]
+];
+let contadorId = 0;
+function vasoSVG(nombre, cat){
+  const n = sinTildes(nombre), hallados = [];
+  for (const [k,c] of TONOS){
+    if (n.includes(k) && !hallados.includes(c)) hallados.push(c);
+    if (hallados.length === 2) break;
+  }
+  if (!hallados.length) hallados.push("#EF7D8C");
+  if (hallados.length === 1) hallados.push(hallados[0]);
+  const [a,b] = hallados, id = "v" + (contadorId++);
+  const cuerpo = "M10 18 H34 L30.5 51 A3 3 0 0 1 27.5 54 H16.5 A3 3 0 0 1 13.5 51 Z";
+  const copete = cat === "smoothies"
+    ? '<circle cx="22" cy="12" r="5" fill="#8FBF4A"/><path d="M22 12 q6 -5 9 -2 q-3 5 -9 2Z" fill="#B5D96B"/>'
+    : '<path d="M11.5 18 q2.5 -8 6 -8 q1.5 -4 5 -2 q4 -1 4.6 3.4 q2.4 2.6 1.4 6.6 Z" fill="#FFF6EC"/>';
+  return '<svg viewBox="0 0 44 56" aria-hidden="true">' +
+    '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="'+b+'"/><stop offset="60%" stop-color="'+a+'"/></linearGradient></defs>' +
+    '<path d="'+cuerpo+'" fill="url(#'+id+')"/>' + copete +
+    '<path d="'+cuerpo+'" fill="none" stroke="#7C0C17" stroke-opacity=".28" stroke-width="1.8" stroke-linejoin="round"/>' +
+    '<rect x="23" y="1" width="4" height="17" rx="2" fill="#E4B04A" transform="rotate(15 25 9)"/></svg>';
+}
+
+/* ---------- estado ---------- */
+const carrito = {};
+let filtro = "todos", busqueda = "";
+const producto = id => D.productos.find(p => p.id === id);
+
+/* ---------- pintar ---------- */
+function pintarNegocio(){
+  const n = D.negocio, est = estadoHorario();
+  document.title = n.nombre + " — Batidos en Santo Tomás";
+  $("#marca").textContent = n.nombre;
+  $("#marca-pie").textContent = n.nombre;
+  $("#lema").textContent = n.lema || "";
+  $("#v-direccion").textContent = n.direccion || "";
+  $("#pie-nota").textContent = n.nombre + (n.direccion ? " · " + n.direccion : "");
+  const wa = "https://wa.me/" + n.whatsapp;
+  $("#wa-directo").href = wa;
+  $("#pie-wa").href = wa;
+  if (n.facebook){ $("#pie-fb").href = n.facebook; $("#pie-fb").hidden = false; }
+  if (!n.pedirDireccion && $("#campo-entrega")) $("#campo-entrega").remove();
+
+  if (est){
+    $("#estado").hidden = false;
+    $("#estado").classList.toggle("cerrado", !est.abierto);
+    $("#estado-txt").textContent = est.texto;
+    $("#dato-portada").textContent = n.direccion || "";
+    const aviso = $("#aviso-cerrado");
+    aviso.hidden = est.abierto;
+    aviso.textContent = "Estamos cerrados en este momento. Podés mandar tu pedido igual y lo confirmamos apenas abramos.";
+    $("#v-horario").innerHTML = D.horario.dias.map((d,i) =>
+      '<li class="' + (i === est.dia ? "hoy" : "") + '"><span>' + escapar(d.nombre) + '</span><span>' +
+      (d.abierto ? hora12(d.abre) + " – " + hora12(d.cierra) : "Cerrado") + '</span></li>'
+    ).join("");
+  }
+}
+
+function pintarChips(){
+  const cats = [{id:"todos",nombre:"Todos"}].concat(D.categorias);
+  $("#chips").innerHTML = cats.map(c =>
+    '<button class="chip" data-cat="'+c.id+'" aria-pressed="'+(c.id===filtro)+'">'+escapar(c.nombre)+'</button>'
+  ).join("");
+}
+
+function pintarMenu(){
+  let html = "";
+  D.categorias.forEach(cat => {
+    if (filtro !== "todos" && filtro !== cat.id) return;
+    const items = D.productos.filter(p => p.cat === cat.id && sinTildes(p.nombre).includes(busqueda));
+    if (!items.length) return;
+    html += '<div class="grupo"><div class="cinta-caja"><h2 class="cinta">' + escapar(cat.nombre) + '</h2></div>';
+    if (cat.descripcion) html += '<p class="cat-desc">' + escapar(cat.descripcion) + '</p>';
+    html += '<ul class="lista">';
+    items.forEach(p => {
+      const cant = carrito[p.id] || 0;
+      const foto = p.foto
+        ? '<img src="'+escapar(p.foto)+'" alt="'+escapar(p.nombre)+'" loading="lazy">'
+        : vasoSVG(p.nombre, p.cat);
+      const sellos = (p.popular ? '<span class="sello pop">Popular</span>' : '') +
+                     (p.agotado ? '<span class="sello ago">Agotado</span>' : '');
+      const control = p.agotado
+        ? '<button class="mas" disabled aria-label="Agotado">+</button>'
+        : (cant > 0
+          ? '<span class="paso-cant"><button data-quitar="'+p.id+'" aria-label="Quitar uno">−</button>' +
+            '<span>'+cant+'</span><button data-poner="'+p.id+'" aria-label="Agregar otro">+</button></span>'
+          : '<button class="mas" data-poner="'+p.id+'" aria-label="Agregar '+escapar(p.nombre)+'">+</button>');
+      html += '<li class="fila' + (p.agotado ? ' sin-stock' : '') + '">' +
+        '<span class="mini">' + foto + '</span>' +
+        '<span class="centro"><span class="linea"><span class="nombre">' + escapar(p.nombre) + sellos +
+        '</span><span class="puntos"></span><span class="precio">' + cordobas(p.precio) + '</span></span>' +
+        (p.descripcion ? '<span class="desc">' + escapar(p.descripcion) + '</span>' : '') +
+        '</span>' + control + '</li>';
+    });
+    html += '</ul></div>';
+  });
+  $("#menu").innerHTML = html || '<p class="vacio">No encontramos ese batido. Probá con otro nombre.</p>';
+}
+
+/* ---------- pedido ---------- */
+const totalCordobas = () => Object.entries(carrito).reduce((s,[id,c]) => { const p = producto(id); return s + (p ? p.precio*c : 0); }, 0);
+const totalUnidades = () => Object.values(carrito).reduce((s,c) => s + c, 0);
+
+function refrescar(){
+  pintarMenu();
+  const n = totalUnidades(), t = totalCordobas();
+  $("#flotante").classList.toggle("visible", n > 0);
+  $("#f-cant").textContent = n === 1 ? "1 batido" : n + " batidos";
+  $("#f-total").textContent = cordobas(t);
+  const alto = Math.min(n / 6, 1) * 36;
+  $("#nivel").setAttribute("y", 54 - alto);
+  $("#nivel").setAttribute("height", alto);
+  pintarPedido();
+}
+
+function pintarPedido(){
+  const filas = Object.entries(carrito).map(([id,c]) => {
+    const p = producto(id); if (!p) return "";
+    return '<li><span class="paso-cant"><button data-quitar="'+id+'" aria-label="Quitar uno">−</button>' +
+      '<span>'+c+'</span><button data-poner="'+id+'" aria-label="Agregar otro">+</button></span>' +
+      '<span class="p-nom">'+escapar(p.nombre)+'</span>' +
+      '<span class="p-sub">'+cordobas(p.precio*c)+'</span></li>';
+  }).join("");
+  $("#pedido").innerHTML = filas || '<li style="opacity:.6">Todavía no has agregado nada.</li>';
+  $("#total").textContent = cordobas(totalCordobas());
+  $("#enviar").href = enlaceWhatsApp();
+}
+
+function enlaceWhatsApp(){
+  const nombre = ($("#c-nombre")||{}).value ? $("#c-nombre").value.trim() : "";
+  const dirEl = $("#c-direccion");
+  const dir = dirEl ? dirEl.value.trim() : "";
+  const nota = ($("#c-nota")||{}).value ? $("#c-nota").value.trim() : "";
+  let txt = "*Pedido — " + D.negocio.nombre + "*\n\n";
+  Object.entries(carrito).forEach(([id,c]) => {
+    const p = producto(id); if (!p) return;
+    txt += "• " + c + "x " + p.nombre + " — " + cordobas(p.precio*c) + "\n";
+  });
+  txt += "\n*Total: " + cordobas(totalCordobas()) + "*";
+  if (nombre) txt += "\nNombre: " + nombre;
+  if (dir)    txt += "\nEntrega: " + dir;
+  if (nota)   txt += "\nNota: " + nota;
+  return "https://wa.me/" + D.negocio.whatsapp + "?text=" + encodeURIComponent(txt);
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click", e => {
+  const poner = e.target.closest("[data-poner]");
+  const quitar = e.target.closest("[data-quitar]");
+  if (poner)  { const id = poner.dataset.poner;  carrito[id] = (carrito[id]||0) + 1; refrescar(); }
+  if (quitar) { const id = quitar.dataset.quitar; carrito[id] = (carrito[id]||0) - 1; if (carrito[id] <= 0) delete carrito[id]; refrescar(); }
+  const chip = e.target.closest(".chip");
+  if (chip){
+    filtro = chip.dataset.cat;
+    document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.cat === filtro));
+    pintarMenu();
+  }
+});
+$("#buscador").addEventListener("input", e => { busqueda = sinTildes(e.target.value.trim()); pintarMenu(); });
+["c-nombre","c-direccion","c-nota"].forEach(id => {
+  const campo = document.getElementById(id);
+  if (campo) campo.addEventListener("input", () => { $("#enviar").href = enlaceWhatsApp(); });
+});
+function abrir(v){
+  $("#hoja").classList.toggle("abierto", v);
+  $("#velo").classList.toggle("abierto", v);
+  $("#hoja").setAttribute("aria-hidden", String(!v));
+  document.body.style.overflow = v ? "hidden" : "";
+  if (v) $("#cerrar").focus();
+}
+$("#flotante").addEventListener("click", () => abrir(true));
+$("#cerrar").addEventListener("click", () => abrir(false));
+$("#velo").addEventListener("click", () => abrir(false));
+document.addEventListener("keydown", e => { if (e.key === "Escape") abrir(false); });
+$("#enviar").addEventListener("click", () => setTimeout(() => abrir(false), 400));
+
+/* ---------- arranque ---------- */
+function iniciar(){ pintarNegocio(); pintarChips(); refrescar(); }
+
+fetch("datos.json?v=" + Date.now())
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(d => { D = d; iniciar(); })
+  .catch(() => { console.warn("No se pudo leer datos.json; se usa la copia de respaldo."); iniciar(); });
+</script>
+</body>
+</html>

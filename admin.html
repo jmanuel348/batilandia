@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel · Batilandia</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#7C0C17">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%99%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Fredoka:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --rosa-suave:#FDE4E1; --crema:#FFF9F6; --vino:#A4121F; --vino-osc:#7C0C17;
+  --oro:#E4B04A; --tinta:#5A2A2E; --tinta-suave:#8E5A5E; --linea:#F0D6D4;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--crema);color:var(--tinta);
+  font-family:"Fredoka",system-ui,-apple-system,sans-serif;font-weight:400;line-height:1.5;
+  padding-bottom:110px;-webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+img{display:block;max-width:100%}
+
+.tope{
+  position:sticky;top:0;z-index:20;background:var(--vino);color:#fff;
+  padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.tope h1{font-family:"Yellowtail",cursive;font-size:1.6rem;margin:0;font-weight:400}
+.tope .salir{font-size:.85rem;background:rgba(255,255,255,.16);padding:7px 14px;border-radius:999px}
+
+.envoltura{max-width:680px;margin:0 auto;padding:18px}
+.caja{background:#fff;border:2px solid var(--linea);border-radius:18px;padding:20px;margin-bottom:16px}
+.caja h2{margin:0 0 6px;font-size:1.15rem;font-weight:500;color:var(--vino)}
+.caja p.ayuda{margin:0 0 16px;font-size:.9rem;font-weight:300;color:var(--tinta-suave)}
+.caja p.ayuda a{color:var(--vino)}
+
+label.campo{display:block;margin-bottom:13px}
+label.campo span{display:block;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-suave);margin-bottom:5px;font-weight:500}
+input[type=text],input[type=number],input[type=password],input[type=time],textarea,select{
+  width:100%;padding:11px 13px;border-radius:12px;border:2px solid var(--linea);
+  background:#fff;font-family:inherit;font-size:1rem;color:var(--tinta);resize:vertical;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--oro)}
+.marca-check{display:flex;align-items:center;gap:9px;margin-bottom:12px;font-size:.96rem}
+.marca-check input{width:20px;height:20px;accent-color:var(--vino)}
+
+.boton{background:var(--vino);color:#fff;padding:13px 22px;border-radius:12px;font-weight:500;width:100%;text-align:center}
+.boton.fantasma{background:#fff;color:var(--vino);box-shadow:inset 0 0 0 2px var(--vino)}
+.boton.peligro{background:#fff;color:#B0303C;box-shadow:inset 0 0 0 2px #E3B9BB}
+.boton[disabled]{opacity:.5;cursor:not-allowed}
+
+.pestanas{display:flex;gap:6px;background:var(--rosa-suave);padding:5px;border-radius:14px;margin-bottom:18px}
+.pestanas button{flex:1;padding:10px;border-radius:10px;font-size:.94rem;font-weight:500;color:var(--vino)}
+.pestanas button[aria-selected="true"]{background:var(--vino);color:#fff}
+
+.encabezado-lista{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.encabezado-lista h2{flex:1;margin:0;font-family:"Yellowtail",cursive;font-size:1.7rem;font-weight:400;color:var(--vino)}
+.encabezado-lista .boton{width:auto;padding:10px 16px;font-size:.9rem}
+
+.grupo-cat{margin-bottom:22px}
+.grupo-cat h3{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta-suave);margin:0 0 8px;font-weight:500}
+.tarjeta-item{
+  display:flex;align-items:center;gap:11px;background:#fff;border:2px solid var(--linea);
+  border-radius:14px;padding:9px 11px;margin-bottom:8px;
+}
+.tarjeta-item.agotado{opacity:.6}
+.miniatura{flex:0 0 46px;width:46px;height:46px;border-radius:11px;overflow:hidden;background:var(--rosa-suave);display:grid;place-items:center;font-size:1.3rem}
+.miniatura img{width:100%;height:100%;object-fit:cover}
+.centro{flex:1;min-width:0}
+.centro b{display:block;font-weight:500;font-size:1rem}
+.centro small{display:block;font-size:.82rem;font-weight:300;color:var(--tinta-suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.marcas{display:flex;gap:5px;flex-shrink:0}
+.marca-btn{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  font-size:.95rem;background:var(--rosa-suave);
+}
+.marca-btn[aria-pressed="true"]{background:var(--oro)}
+.marca-btn.stock[aria-pressed="true"]{background:#E0D3D3}
+
+.fila-dia{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:8px}
+.fila-dia .nombre-dia{font-size:.95rem;text-transform:capitalize}
+.fila-dia input[type=time]{padding:8px 10px;font-size:.9rem}
+.fila-dia.cerrado .nombre-dia{opacity:.45}
+
+.barra-guardar{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  background:#fff;border-top:2px solid var(--linea);
+  padding:12px 18px calc(12px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:12px;
+}
+.barra-guardar span{flex:1;font-size:.88rem;font-weight:300;color:var(--tinta-suave)}
+.barra-guardar .boton{width:auto;padding:12px 22px}
+
+.velo{position:fixed;inset:0;background:rgba(60,10,16,.55);z-index:40;display:none}
+.velo.abierto{display:block}
+.modal{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--crema);
+  border-radius:20px 20px 0 0;padding:8px 18px 22px;max-height:92vh;overflow-y:auto;
+  max-width:620px;margin:0 auto;transform:translateY(100%);transition:transform .28s ease;
+}
+.modal.abierto{transform:translateY(0)}
+.agarre{width:44px;height:5px;border-radius:3px;background:#E3B9BB;margin:0 auto 14px}
+.modal h2{font-family:"Yellowtail",cursive;color:var(--vino);font-size:1.7rem;margin:0 0 16px;font-weight:400;text-align:center}
+.acciones-modal{display:grid;gap:9px;margin-top:6px}
+
+.previo{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.previo .cuadro{width:70px;height:70px;border-radius:14px;overflow:hidden;background:var(--rosa-suave);display:grid;place-items:center;font-size:1.6rem;flex:0 0 70px}
+.previo .cuadro img{width:100%;height:100%;object-fit:cover}
+.previo .lado{flex:1;display:grid;gap:6px}
+.previo .lado button{font-size:.86rem;padding:9px 12px;border-radius:10px;background:var(--rosa-suave);color:var(--vino);font-weight:500}
+input[type=file]{display:none}
+
+.mensaje{padding:11px 14px;border-radius:12px;font-size:.9rem;font-weight:300;margin-bottom:14px}
+.mensaje.error{background:#FBE0E2;color:#8E1D28}
+.mensaje.ok{background:#DFF2E4;color:#1E6B38}
+.mensaje.trabajando{background:#FBEEDA;color:#8A5A22}
+.vacio-lista{text-align:center;color:var(--tinta-suave);font-weight:300;padding:26px}
+:focus-visible{outline:3px solid var(--oro);outline-offset:2px;border-radius:8px}
+</style>
+</head>
+
+<body>
+
+<header class="tope">
+  <h1>Panel de Batilandia</h1>
+  <button class="salir" id="salir" hidden>Salir</button>
+</header>
+
+<div class="envoltura">
+
+  <!-- ============ ENTRAR ============ -->
+  <section id="entrar" class="caja">
+    <h2>Entrar al panel</h2>
+    <p class="ayuda">Necesitás una llave de acceso de GitHub. Se genera una sola vez y queda guardada en este teléfono. La guía tiene el paso a paso.</p>
+    <div id="msg-entrar"></div>
+    <label class="campo">
+      <span>Repositorio</span>
+      <input type="text" id="in-repo" placeholder="tuusuario/batilandia" autocapitalize="off" autocorrect="off" spellcheck="false">
+    </label>
+    <label class="campo">
+      <span>Llave de acceso</span>
+      <input type="password" id="in-token" placeholder="github_pat_…" autocapitalize="off" autocorrect="off" spellcheck="false">
+    </label>
+    <button class="boton" id="btn-entrar">Entrar</button>
+  </section>
+
+  <!-- ============ PANEL ============ -->
+  <main id="panel" hidden>
+    <div class="pestanas" role="tablist">
+      <button role="tab" data-t="batidos" aria-selected="true">Batidos</button>
+      <button role="tab" data-t="categorias" aria-selected="false">Categorías</button>
+      <button role="tab" data-t="negocio" aria-selected="false">Negocio</button>
+    </div>
+    <div id="vista"></div>
+  </main>
+</div>
+
+<div class="barra-guardar" id="barra" hidden>
+  <span id="aviso-guardar">Sin cambios pendientes</span>
+  <button class="boton" id="btn-guardar" disabled>Publicar</button>
+</div>
+
+<div class="velo" id="velo"></div>
+<section class="modal" id="modal" role="dialog" aria-modal="true"></section>
+
+<script>
+/* =========================================================
+   PANEL DE BATILANDIA
+   Guarda el contenido en datos.json dentro de tu repositorio
+   de GitHub. Cloudflare republica el sitio solo.
+   ========================================================= */
+
+/* --- guardado local tolerante (si el navegador lo bloquea, usa memoria) --- */
+const memoria = {};
+const recordar = (k,v) => { try{ localStorage.setItem(k,v); }catch(e){ memoria[k]=v; } };
+const recordado = k => { try{ return localStorage.getItem(k); }catch(e){ return memoria[k]||null; } };
+const olvidar = k => { try{ localStorage.removeItem(k); }catch(e){ delete memoria[k]; } };
+
+let REPO = "", TOKEN = "";
+let D = null;              // contenido completo
+let sucio = false;         // hay cambios sin publicar
+let vistaActual = "batidos";
+let filtroTexto = "";
+
+const $ = s => document.querySelector(s);
+const escapar = t => String(t==null?"":t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const idNuevo = pre => pre + Date.now().toString(36) + Math.floor(Math.random()*90+10);
+const babel = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const resbalar = s => babel(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "foto";
+
+function mensaje(donde, texto, tipo){
+  const c = $(donde);
+  if (!c) return;
+  c.innerHTML = texto ? '<div class="mensaje '+tipo+'">'+escapar(texto)+'</div>' : "";
+}
+
+/* =========================================================
+   GitHub
+   ========================================================= */
+async function gh(ruta, opciones){
+  const url = "https://api.github.com/repos/" + REPO + "/contents/" + ruta;
+  const r = await fetch(url, Object.assign({}, opciones, {
+    headers: Object.assign({
+      "Authorization": "Bearer " + TOKEN,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28"
+    }, (opciones && opciones.headers) || {})
+  }));
+  if (!r.ok){
+    let detalle = "";
+    try { detalle = (await r.json()).message || ""; } catch(e){}
+    if (r.status === 401) throw new Error("La llave de acceso no es válida o ya venció.");
+    if (r.status === 404) throw new Error("No se encontró el repositorio o el archivo. Revisá que el nombre esté bien escrito.");
+    throw new Error("GitHub respondió " + r.status + (detalle ? ": " + detalle : ""));
+  }
+  return r.json();
+}
+
+const aBase64 = txt => btoa(unescape(encodeURIComponent(txt)));
+const deBase64 = b64 => decodeURIComponent(escape(atob(String(b64).replace(/\s/g,""))));
+
+async function leerDatos(){
+  const j = await gh("datos.json?t=" + Date.now(), { method:"GET", cache:"no-store" });
+  return { datos: JSON.parse(deBase64(j.content)), sha: j.sha };
+}
+
+async function escribirArchivo(ruta, contenidoBase64, mensajeCommit){
+  let sha = null;
+  try { sha = (await gh(ruta + "?t=" + Date.now(), { method:"GET", cache:"no-store" })).sha; } catch(e){ /* no existe: se crea */ }
+  const cuerpo = { message: mensajeCommit, content: contenidoBase64 };
+  if (sha) cuerpo.sha = sha;
+  return gh(ruta, { method:"PUT", body: JSON.stringify(cuerpo) });
+}
+
+/* --- fotos: se achican antes de subir --- */
+function comprimir(archivo, lado, calidad){
+  return new Promise((ok, err) => {
+    const lector = new FileReader();
+    lector.onerror = () => err(new Error("No se pudo leer la foto."));
+    lector.onload = () => {
+      const img = new Image();
+      img.onerror = () => err(new Error("El archivo no parece una foto."));
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        const mayor = Math.max(w, h);
+        if (mayor > lado){ const f = lado / mayor; w = Math.round(w*f); h = Math.round(h*f); }
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        const ctx = c.getContext("2d");
+        ctx.fillStyle = "#fff"; ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img, 0, 0, w, h);
+        ok(c.toDataURL("image/jpeg", calidad).split(",")[1]);
+      };
+      img.src = lector.result;
+    };
+    lector.readAsDataURL(archivo);
+  });
+}
+
+async function subirFoto(archivo, nombreBase){
+  const b64 = await comprimir(archivo, 900, 0.82);
+  const ruta = "fotos/" + resbalar(nombreBase) + "-" + Date.now().toString(36) + ".jpg";
+  await escribirArchivo(ruta, b64, "Foto: " + nombreBase);
+  return ruta;
+}
+
+/* =========================================================
+   Entrar / salir
+   ========================================================= */
+async function entrar(repo, token){
+  REPO = repo.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,"");
+  TOKEN = token.trim();
+  const r = await leerDatos();
+  D = r.datos;
+  recordar("bati_repo", REPO);
+  recordar("bati_token", TOKEN);
+  $("#entrar").hidden = true;
+  $("#panel").hidden = false;
+  $("#barra").hidden = false;
+  $("#salir").hidden = false;
+  pintar();
+}
+
+$("#btn-entrar").addEventListener("click", async () => {
+  const repo = $("#in-repo").value, token = $("#in-token").value;
+  if (!repo || !token){ mensaje("#msg-entrar","Faltan datos: escribí el repositorio y la llave.","error"); return; }
+  mensaje("#msg-entrar","Conectando…","trabajando");
+  $("#btn-entrar").disabled = true;
+  try { await entrar(repo, token); mensaje("#msg-entrar","",""); }
+  catch(e){ mensaje("#msg-entrar", e.message, "error"); }
+  $("#btn-entrar").disabled = false;
+});
+
+$("#salir").addEventListener("click", () => {
+  if (sucio && !confirm("Tenés cambios sin publicar. ¿Salir de todos modos?")) return;
+  olvidar("bati_token");
+  location.reload();
+});
+
+/* =========================================================
+   Estado de cambios
+   ========================================================= */
+function marcarSucio(){
+  sucio = true;
+  $("#aviso-guardar").textContent = "Cambios sin publicar";
+  $("#btn-guardar").disabled = false;
+}
+function marcarLimpio(texto){
+  sucio = false;
+  $("#aviso-guardar").textContent = texto || "Sin cambios pendientes";
+  $("#btn-guardar").disabled = true;
+}
+
+$("#btn-guardar").addEventListener("click", async () => {
+  const b = $("#btn-guardar");
+  b.disabled = true;
+  $("#aviso-guardar").textContent = "Publicando…";
+  try {
+    await escribirArchivo("datos.json", aBase64(JSON.stringify(D, null, 2)), "Actualización desde el panel");
+    marcarLimpio("Publicado. El sitio se actualiza en un minuto.");
+  } catch(e){
+    $("#aviso-guardar").textContent = e.message;
+    b.disabled = false;
+  }
+});
+
+window.addEventListener("beforeunload", e => { if (sucio){ e.preventDefault(); e.returnValue = ""; } });
+
+/* =========================================================
+   Pestañas
+   ========================================================= */
+document.querySelectorAll(".pestanas button").forEach(b => {
+  b.addEventListener("click", () => {
+    vistaActual = b.dataset.t;
+    document.querySelectorAll(".pestanas button").forEach(x => x.setAttribute("aria-selected", x === b));
+    pintar();
+  });
+});
+
+function pintar(){
+  if (vistaActual === "batidos") pintarBatidos();
+  else if (vistaActual === "categorias") pintarCategorias();
+  else pintarNegocio();
+}
+
+/* =========================================================
+   Batidos
+   ========================================================= */
+function pintarBatidos(){
+  let html = '<div class="encabezado-lista"><h2>Batidos</h2>' +
+    '<button class="boton" data-nuevo-producto>+ Nuevo</button></div>' +
+    '<label class="campo"><input type="text" id="filtro" placeholder="Buscar…" value="'+escapar(filtroTexto)+'"></label>';
+
+  if (!D.categorias.length){
+    html += '<p class="vacio-lista">Primero creá una categoría.</p>';
+  }
+
+  D.categorias.forEach(cat => {
+    const items = D.productos.filter(p => p.cat === cat.id && babel(p.nombre).includes(babel(filtroTexto)));
+    if (!items.length) return;
+    html += '<div class="grupo-cat"><h3>'+escapar(cat.nombre)+' · '+items.length+'</h3>';
+    items.forEach(p => {
+      const mini = p.foto
+        ? '<img src="'+escapar(p.foto)+'" alt="">'
+        : '<span aria-hidden="true">🥤</span>';
+      html += '<div class="tarjeta-item'+(p.agotado?' agotado':'')+'">' +
+        '<span class="miniatura">'+mini+'</span>' +
+        '<button class="centro" style="text-align:left" data-editar="'+p.id+'">' +
+          '<b>'+escapar(p.nombre)+'</b>' +
+          '<small>C$'+p.precio+(p.descripcion?' · '+escapar(p.descripcion):'')+'</small>' +
+        '</button>' +
+        '<span class="marcas">' +
+          '<button class="marca-btn" data-pop="'+p.id+'" aria-pressed="'+!!p.popular+'" title="Popular">★</button>' +
+          '<button class="marca-btn stock" data-ago="'+p.id+'" aria-pressed="'+!!p.agotado+'" title="Agotado">✕</button>' +
+        '</span></div>';
+    });
+    html += '</div>';
+  });
+
+  $("#vista").innerHTML = html;
+  const f = $("#filtro");
+  if (f) f.addEventListener("input", e => { filtroTexto = e.target.value; pintarBatidos(); $("#filtro").focus(); });
+}
+
+function formularioProducto(p){
+  const nuevo = !p;
+  p = p || { id:idNuevo("p"), cat:(D.categorias[0]||{}).id, nombre:"", precio:100, descripcion:"", foto:"", agotado:false, popular:false };
+  abrirModal(
+    '<h2>'+(nuevo?"Nuevo batido":"Editar batido")+'</h2>' +
+    '<div id="msg-modal"></div>' +
+    '<div class="previo">' +
+      '<span class="cuadro" id="previo-foto">'+(p.foto?'<img src="'+escapar(p.foto)+'" alt="">':'🥤')+'</span>' +
+      '<span class="lado">' +
+        '<button type="button" id="btn-foto">Elegir foto</button>' +
+        '<button type="button" id="btn-sinfoto">Quitar foto</button>' +
+      '</span></div>' +
+    '<input type="file" id="archivo-foto" accept="image/*">' +
+    '<label class="campo"><span>Categoría</span><select id="f-cat">' +
+      D.categorias.map(c => '<option value="'+c.id+'"'+(c.id===p.cat?' selected':'')+'>'+escapar(c.nombre)+'</option>').join("") +
+    '</select></label>' +
+    '<label class="campo"><span>Nombre</span><input type="text" id="f-nombre" value="'+escapar(p.nombre)+'"></label>' +
+    '<label class="campo"><span>Precio en córdobas</span><input type="number" id="f-precio" inputmode="numeric" value="'+p.precio+'"></label>' +
+    '<label class="campo"><span>Descripción</span><textarea id="f-desc" rows="2" placeholder="Una línea corta: qué lleva o a qué sabe">'+escapar(p.descripcion)+'</textarea></label>' +
+    '<label class="marca-check"><input type="checkbox" id="f-pop"'+(p.popular?" checked":"")+'> Mostrar como popular</label>' +
+    '<label class="marca-check"><input type="checkbox" id="f-ago"'+(p.agotado?" checked":"")+'> Marcar como agotado</label>' +
+    '<div class="acciones-modal">' +
+      '<button class="boton" id="f-guardar">Guardar</button>' +
+      (nuevo ? '' : '<button class="boton peligro" id="f-borrar">Eliminar este batido</button>') +
+      '<button class="boton fantasma" data-cerrar>Cancelar</button>' +
+    '</div>'
+  );
+
+  let fotoNueva = null, fotoActual = p.foto;
+
+  $("#btn-foto").addEventListener("click", () => $("#archivo-foto").click());
+  $("#btn-sinfoto").addEventListener("click", () => {
+    fotoNueva = null; fotoActual = "";
+    $("#previo-foto").innerHTML = "🥤";
+  });
+  $("#archivo-foto").addEventListener("change", e => {
+    const a = e.target.files[0];
+    if (!a) return;
+    fotoNueva = a;
+    const url = URL.createObjectURL(a);
+    $("#previo-foto").innerHTML = '<img src="'+url+'" alt="">';
+  });
+
+  $("#f-guardar").addEventListener("click", async () => {
+    const nombre = $("#f-nombre").value.trim();
+    const precio = parseInt($("#f-precio").value, 10);
+    if (!nombre){ mensaje("#msg-modal","Ponele un nombre al batido.","error"); return; }
+    if (!(precio > 0)){ mensaje("#msg-modal","El precio tiene que ser un número mayor que cero.","error"); return; }
+
+    $("#f-guardar").disabled = true;
+    if (fotoNueva){
+      mensaje("#msg-modal","Subiendo la foto…","trabajando");
+      try { fotoActual = await subirFoto(fotoNueva, nombre); }
+      catch(err){ mensaje("#msg-modal", err.message, "error"); $("#f-guardar").disabled = false; return; }
+    }
+
+    const datos = {
+      id: p.id, cat: $("#f-cat").value, nombre: nombre, precio: precio,
+      descripcion: $("#f-desc").value.trim(), foto: fotoActual,
+      agotado: $("#f-ago").checked, popular: $("#f-pop").checked
+    };
+    const i = D.productos.findIndex(x => x.id === p.id);
+    if (i >= 0) D.productos[i] = datos; else D.productos.push(datos);
+    marcarSucio(); cerrarModal(); pintar();
+  });
+
+  const borrar = $("#f-borrar");
+  if (borrar) borrar.addEventListener("click", () => {
+    if (!confirm("¿Eliminar «" + p.nombre + "» del menú?")) return;
+    D.productos = D.productos.filter(x => x.id !== p.id);
+    marcarSucio(); cerrarModal(); pintar();
+  });
+}
+
+/* =========================================================
+   Categorías
+   ========================================================= */
+function pintarCategorias(){
+  let html = '<div class="encabezado-lista"><h2>Categorías</h2>' +
+    '<button class="boton" data-nueva-categoria>+ Nueva</button></div>';
+  if (!D.categorias.length) html += '<p class="vacio-lista">Todavía no hay categorías.</p>';
+  D.categorias.forEach((c, i) => {
+    const cuantos = D.productos.filter(p => p.cat === c.id).length;
+    html += '<div class="tarjeta-item">' +
+      '<button class="centro" style="text-align:left" data-editar-cat="'+c.id+'">' +
+        '<b>'+escapar(c.nombre)+'</b><small>'+cuantos+' batidos'+(c.descripcion?' · '+escapar(c.descripcion):'')+'</small>' +
+      '</button>' +
+      '<span class="marcas">' +
+        '<button class="marca-btn" data-subir-cat="'+i+'" title="Subir">↑</button>' +
+        '<button class="marca-btn" data-bajar-cat="'+i+'" title="Bajar">↓</button>' +
+      '</span></div>';
+  });
+  $("#vista").innerHTML = html;
+}
+
+function formularioCategoria(c){
+  const nueva = !c;
+  c = c || { id:idNuevo("c"), nombre:"", descripcion:"" };
+  abrirModal(
+    '<h2>'+(nueva?"Nueva categoría":"Editar categoría")+'</h2>' +
+    '<div id="msg-modal"></div>' +
+    '<label class="campo"><span>Nombre</span><input type="text" id="c-nombre" value="'+escapar(c.nombre)+'" placeholder="Malteadas, Jugos naturales…"></label>' +
+    '<label class="campo"><span>Descripción</span><textarea id="c-desc" rows="2" placeholder="Una línea que aparece bajo el título">'+escapar(c.descripcion)+'</textarea></label>' +
+    '<div class="acciones-modal">' +
+      '<button class="boton" id="c-guardar">Guardar</button>' +
+      (nueva ? '' : '<button class="boton peligro" id="c-borrar">Eliminar categoría</button>') +
+      '<button class="boton fantasma" data-cerrar>Cancelar</button>' +
+    '</div>'
+  );
+
+  $("#c-guardar").addEventListener("click", () => {
+    const nombre = $("#c-nombre").value.trim();
+    if (!nombre){ mensaje("#msg-modal","Ponele un nombre a la categoría.","error"); return; }
+    const datos = { id:c.id, nombre:nombre, descripcion:$("#c-desc").value.trim() };
+    const i = D.categorias.findIndex(x => x.id === c.id);
+    if (i >= 0) D.categorias[i] = datos; else D.categorias.push(datos);
+    marcarSucio(); cerrarModal(); pintar();
+  });
+
+  const borrar = $("#c-borrar");
+  if (borrar) borrar.addEventListener("click", () => {
+    const cuantos = D.productos.filter(p => p.cat === c.id).length;
+    if (cuantos){ mensaje("#msg-modal","Esta categoría tiene "+cuantos+" batidos. Movelos a otra antes de eliminarla.","error"); return; }
+    if (!confirm("¿Eliminar la categoría «" + c.nombre + "»?")) return;
+    D.categorias = D.categorias.filter(x => x.id !== c.id);
+    marcarSucio(); cerrarModal(); pintar();
+  });
+}
+
+/* =========================================================
+   Negocio y horario
+   ========================================================= */
+function pintarNegocio(){
+  const n = D.negocio, h = D.horario;
+  $("#vista").innerHTML =
+    '<div class="encabezado-lista"><h2>Negocio</h2></div>' +
+    '<div class="caja">' +
+      '<label class="campo"><span>Nombre</span><input type="text" id="n-nombre" value="'+escapar(n.nombre)+'"></label>' +
+      '<label class="campo"><span>Lema</span><textarea id="n-lema" rows="2">'+escapar(n.lema)+'</textarea></label>' +
+      '<label class="campo"><span>WhatsApp (505 + número)</span><input type="text" id="n-wa" inputmode="numeric" value="'+escapar(n.whatsapp)+'"></label>' +
+      '<label class="campo"><span>Dirección</span><input type="text" id="n-dir" value="'+escapar(n.direccion)+'"></label>' +
+      '<label class="campo"><span>Página de Facebook</span><input type="text" id="n-fb" value="'+escapar(n.facebook)+'" placeholder="https://facebook.com/…"></label>' +
+      '<label class="marca-check"><input type="checkbox" id="n-entrega"'+(n.pedirDireccion?" checked":"")+'> Pedir dirección de entrega en el pedido</label>' +
+    '</div>' +
+    '<div class="encabezado-lista"><h2>Horario</h2></div>' +
+    '<div class="caja">' +
+      h.dias.map((d,i) =>
+        '<div class="fila-dia'+(d.abierto?'':' cerrado')+'" data-dia="'+i+'">' +
+          '<label class="nombre-dia"><input type="checkbox" class="d-abierto" data-i="'+i+'"'+(d.abierto?" checked":"")+'> '+escapar(d.nombre)+'</label>' +
+          '<input type="time" class="d-abre" data-i="'+i+'" value="'+d.abre+'"'+(d.abierto?'':' disabled')+'>' +
+          '<input type="time" class="d-cierra" data-i="'+i+'" value="'+d.cierra+'"'+(d.abierto?'':' disabled')+'>' +
+        '</div>'
+      ).join("") +
+      '<p class="ayuda" style="margin:10px 0 0;font-size:.85rem">El sitio muestra solo «abierto» o «cerrado» según esta tabla. Los pedidos se pueden mandar igual a toda hora.</p>' +
+    '</div>';
+
+  const enlazar = (sel, campo) => {
+    const el = $(sel);
+    el.addEventListener("input", () => {
+      D.negocio[campo] = el.type === "checkbox" ? el.checked : el.value.trim();
+      marcarSucio();
+    });
+  };
+  enlazar("#n-nombre","nombre"); enlazar("#n-lema","lema"); enlazar("#n-wa","whatsapp");
+  enlazar("#n-dir","direccion"); enlazar("#n-fb","facebook");
+  $("#n-entrega").addEventListener("change", e => { D.negocio.pedirDireccion = e.target.checked; marcarSucio(); });
+
+  document.querySelectorAll(".d-abierto").forEach(el => el.addEventListener("change", e => {
+    const i = +e.target.dataset.i;
+    D.horario.dias[i].abierto = e.target.checked;
+    marcarSucio(); pintarNegocio();
+  }));
+  document.querySelectorAll(".d-abre").forEach(el => el.addEventListener("input", e => {
+    D.horario.dias[+e.target.dataset.i].abre = e.target.value; marcarSucio();
+  }));
+  document.querySelectorAll(".d-cierra").forEach(el => el.addEventListener("input", e => {
+    D.horario.dias[+e.target.dataset.i].cierra = e.target.value; marcarSucio();
+  }));
+}
+
+/* =========================================================
+   Modal
+   ========================================================= */
+function abrirModal(html){
+  $("#modal").innerHTML = '<div class="agarre"></div>' + html;
+  $("#modal").classList.add("abierto");
+  $("#velo").classList.add("abierto");
+  document.body.style.overflow = "hidden";
+}
+function cerrarModal(){
+  $("#modal").classList.remove("abierto");
+  $("#velo").classList.remove("abierto");
+  document.body.style.overflow = "";
+}
+$("#velo").addEventListener("click", cerrarModal);
+
+/* =========================================================
+   Clicks generales
+   ========================================================= */
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-cerrar]")) return cerrarModal();
+  if (e.target.closest("[data-nuevo-producto]")){
+    if (!D.categorias.length) return alert("Primero creá una categoría.");
+    return formularioProducto(null);
+  }
+  if (e.target.closest("[data-nueva-categoria]")) return formularioCategoria(null);
+
+  const ed = e.target.closest("[data-editar]");
+  if (ed) return formularioProducto(D.productos.find(p => p.id === ed.dataset.editar));
+
+  const edc = e.target.closest("[data-editar-cat]");
+  if (edc) return formularioCategoria(D.categorias.find(c => c.id === edc.dataset.editarCat));
+
+  const pop = e.target.closest("[data-pop]");
+  if (pop){ const p = D.productos.find(x => x.id === pop.dataset.pop); p.popular = !p.popular; marcarSucio(); return pintar(); }
+
+  const ago = e.target.closest("[data-ago]");
+  if (ago){ const p = D.productos.find(x => x.id === ago.dataset.ago); p.agotado = !p.agotado; marcarSucio(); return pintar(); }
+
+  const sub = e.target.closest("[data-subir-cat]");
+  if (sub){ const i = +sub.dataset.subirCat; if (i > 0){ const c = D.categorias.splice(i,1)[0]; D.categorias.splice(i-1,0,c); marcarSucio(); pintar(); } return; }
+
+  const baj = e.target.closest("[data-bajar-cat]");
+  if (baj){ const i = +baj.dataset.bajarCat; if (i < D.categorias.length-1){ const c = D.categorias.splice(i,1)[0]; D.categorias.splice(i+1,0,c); marcarSucio(); pintar(); } return; }
+});
+
+/* =========================================================
+   Arranque: si ya entró antes, reconecta solo
+   ========================================================= */
+(async function(){
+  const r = recordado("bati_repo"), t = recordado("bati_token");
+  if (!r || !t) return;
+  $("#in-repo").value = r;
+  mensaje("#msg-entrar","Conectando…","trabajando");
+  try { await entrar(r, t); mensaje("#msg-entrar","",""); }
+  catch(e){ mensaje("#msg-entrar", e.message + " Volvé a entrar.", "error"); olvidar("bati_token"); }
+})();
+</script>
+</body>
+</html>

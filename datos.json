@@ -1,0 +1,456 @@
+{
+  "negocio": {
+    "nombre": "Batilandia",
+    "lema": "Deliciosos batidos, frappés y smoothies hechos al momento.",
+    "whatsapp": "50586914000",
+    "direccion": "Santo Tomás, Chontales",
+    "facebook": "",
+    "pedirDireccion": true
+  },
+  "horario": {
+    "zona": -6,
+    "dias": [
+      {
+        "nombre": "domingo",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "lunes",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "martes",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "miércoles",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "jueves",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "viernes",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      },
+      {
+        "nombre": "sábado",
+        "abierto": true,
+        "abre": "10:00",
+        "cierra": "20:00"
+      }
+    ]
+  },
+  "categorias": [
+    {
+      "id": "frappes",
+      "nombre": "Frappés",
+      "descripcion": "Batidos con hielo, cremosos y bien fríos."
+    },
+    {
+      "id": "milkshakes",
+      "nombre": "Milkshakes",
+      "descripcion": "Con leche y fruta fresca. Elegí tu combinación."
+    },
+    {
+      "id": "smoothies",
+      "nombre": "Smoothies",
+      "descripcion": "Solo fruta, sin leche. Livianos y refrescantes."
+    }
+  ],
+  "productos": [
+    {
+      "id": "p001",
+      "cat": "frappes",
+      "nombre": "Sencillo",
+      "precio": 120,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p002",
+      "cat": "frappes",
+      "nombre": "Caramelo",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p003",
+      "cat": "frappes",
+      "nombre": "Chocolate",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p004",
+      "cat": "frappes",
+      "nombre": "Oreo",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p005",
+      "cat": "frappes",
+      "nombre": "Banano",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p006",
+      "cat": "frappes",
+      "nombre": "Mixto",
+      "precio": 130,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p007",
+      "cat": "frappes",
+      "nombre": "Capuccino",
+      "precio": 140,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p008",
+      "cat": "frappes",
+      "nombre": "Moka",
+      "precio": 140,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p009",
+      "cat": "frappes",
+      "nombre": "Pingüino",
+      "precio": 140,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p010",
+      "cat": "milkshakes",
+      "nombre": "Fresa",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p011",
+      "cat": "milkshakes",
+      "nombre": "Banano",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p012",
+      "cat": "milkshakes",
+      "nombre": "Chocolate",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p013",
+      "cat": "milkshakes",
+      "nombre": "Ciruela",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p014",
+      "cat": "milkshakes",
+      "nombre": "Arándanos",
+      "precio": 90,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p015",
+      "cat": "milkshakes",
+      "nombre": "Banano Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p016",
+      "cat": "milkshakes",
+      "nombre": "Banano Vainilla",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p017",
+      "cat": "milkshakes",
+      "nombre": "Banano Caramelo",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p018",
+      "cat": "milkshakes",
+      "nombre": "Galleta Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p019",
+      "cat": "milkshakes",
+      "nombre": "Galleta Chocolate",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p020",
+      "cat": "milkshakes",
+      "nombre": "Galleta Banano",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p021",
+      "cat": "milkshakes",
+      "nombre": "Fresa Chocolate",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p022",
+      "cat": "milkshakes",
+      "nombre": "Sandía Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p023",
+      "cat": "milkshakes",
+      "nombre": "Papaya Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p024",
+      "cat": "milkshakes",
+      "nombre": "Nancite Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p025",
+      "cat": "milkshakes",
+      "nombre": "Piña Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p026",
+      "cat": "milkshakes",
+      "nombre": "Melón Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p027",
+      "cat": "milkshakes",
+      "nombre": "Coco Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p028",
+      "cat": "milkshakes",
+      "nombre": "Maní Fresa",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p029",
+      "cat": "milkshakes",
+      "nombre": "Manzana Fresa",
+      "precio": 110,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p030",
+      "cat": "milkshakes",
+      "nombre": "Banano Fresa Chocolate",
+      "precio": 110,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p031",
+      "cat": "milkshakes",
+      "nombre": "Galleta Fresa Chocolate",
+      "precio": 110,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p032",
+      "cat": "milkshakes",
+      "nombre": "Leche Mixta",
+      "precio": 120,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p033",
+      "cat": "milkshakes",
+      "nombre": "Ron con Pasa",
+      "precio": 120,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p034",
+      "cat": "smoothies",
+      "nombre": "Bati Fruti",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p035",
+      "cat": "smoothies",
+      "nombre": "Bati Tropical",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p036",
+      "cat": "smoothies",
+      "nombre": "Bati Verano",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p037",
+      "cat": "smoothies",
+      "nombre": "Bati Verde",
+      "precio": 100,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    },
+    {
+      "id": "p038",
+      "cat": "smoothies",
+      "nombre": "Manzana Mix",
+      "precio": 110,
+      "descripcion": "",
+      "foto": "",
+      "agotado": false,
+      "popular": false
+    }
+  ]
+}
