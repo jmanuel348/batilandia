@@ -16,10 +16,10 @@ batilandia/
     ├── admin.html        ← tu panel
     ├── datos.json        ← batidos, precios, horario
     ├── manifest.json     ← deja guardar el sitio como app
+    ├── manifest-panel.json ← lo mismo, para el panel
     ├── sw.js             ← hace que abra sin señal
-    ├── icono-192.png     ← el ícono de la app
-    ├── icono-512.png
-    ├── icono-180.png     ← el que usa iPhone
+    ├── icono-*.png       ← el batido, para el sitio
+    ├── icono-panel-*.png ← el engranaje, para el panel
     └── fotos/            ← se crea sola cuando subís la primera foto
 ```
 
@@ -221,10 +221,15 @@ Esto no necesita configuración. Solo hay que subir cinco archivos nuevos a `pub
 
 | Archivo | Para qué |
 |---|---|
-| `manifest.json` | El nombre, los colores y el ícono de la app |
+| `manifest.json` | El nombre, los colores y el ícono del sitio |
+| `manifest-panel.json` | Lo mismo, pero del panel |
 | `sw.js` | Guarda el menú en el teléfono para que abra sin señal |
-| `icono-192.png` · `icono-512.png` | El ícono en Android |
-| `icono-180.png` | El ícono en iPhone |
+| `icono-192.png` · `icono-512.png` · `icono-180.png` | El batido, para el sitio |
+| `icono-panel-192.png` · `icono-panel-512.png` · `icono-panel-180.png` | El engranaje, para el panel |
+
+**Son dos apps distintas.** El sitio se guarda con el ícono del batido y le abre el menú a tus clientes. El panel se guarda con el ícono del engranaje y te abre tu administración. Podés tener las dos en la pantalla de inicio sin que se confundan.
+
+**El panel se guarda desde adentro:** entrás, vas a la pestaña **Negocio**, y hasta abajo del todo hay una tarjeta que dice *La app* con el botón. Si ya lo tenés guardado, en vez del botón te avisa que ya lo estás usando como app.
 
 **Cómo lo ve tu cliente.** Abajo a la derecha, arriba del botón verde de WhatsApp, aparece un botón vino con una flecha hacia abajo.
 

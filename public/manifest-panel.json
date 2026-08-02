@@ -1,0 +1,18 @@
+{
+  "id": "batilandia-panel",
+  "name": "Panel de Batilandia",
+  "short_name": "Panel",
+  "description": "Pedidos, batidos, categorías y horario de Batilandia.",
+  "lang": "es-NI",
+  "start_url": "admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF9F6",
+  "theme_color": "#7C0C17",
+  "icons": [
+    { "src": "icono-panel-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icono-panel-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icono-panel-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

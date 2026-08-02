@@ -6,6 +6,14 @@
 <title>Panel · Batilandia</title>
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#7C0C17">
+
+<!-- Para guardar el panel como app. Manifiesto propio: si usara el del
+     sitio, al instalarlo abriría el menú de clientes en vez del panel. -->
+<link rel="manifest" href="manifest-panel.json">
+<link rel="apple-touch-icon" href="icono-panel-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Panel">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%99%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -158,6 +166,22 @@ input[type=file]{display:none}
 .mensaje.ok{background:#DFF2E4;color:#1E6B38}
 .mensaje.trabajando{background:#FBEEDA;color:#8A5A22}
 .vacio-lista{text-align:center;color:var(--tinta-suave);font-weight:300;padding:26px}
+
+/* guardar el panel como app */
+.boton.instalar{display:flex;align-items:center;justify-content:center;gap:9px}
+.boton.instalar svg{width:19px;height:19px;flex:0 0 auto}
+.pasos-iphone{
+  margin-top:12px;background:var(--rosa-suave);border-radius:12px;
+  padding:12px 14px;font-size:.88rem;font-weight:300;line-height:1.55;
+}
+.pasos-iphone b{font-weight:500;color:var(--vino)}
+.pasos-iphone .compartir{display:inline-grid;place-items:center;width:19px;height:19px;
+  vertical-align:-5px;color:#0A84FF}
+.ya-guardada{
+  display:flex;align-items:center;gap:9px;margin:0;
+  font-size:.9rem;font-weight:300;color:#1E6B38;
+}
+.ya-guardada svg{width:20px;height:20px;flex:0 0 auto}
 :focus-visible{outline:3px solid var(--oro);outline-offset:2px;border-radius:8px}
 </style>
 </head>
@@ -241,6 +265,47 @@ const escapar = t => String(t==null?"":t).replace(/[&<>"]/g, c => ({"&":"&amp;",
 const idNuevo = pre => pre + Date.now().toString(36) + Math.floor(Math.random()*90+10);
 const babel = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const resbalar = s => babel(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "foto";
+
+/* =========================================================
+   Guardar el panel como app
+   Android avisa solo y se instala de un toque. iPhone no deja
+   automatizarlo: ahí se muestran los pasos a mano.
+   ========================================================= */
+let pedidoInstalar = null;
+const esIPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const yaEsApp = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const sePuedeInstalar = () => !yaEsApp && (pedidoInstalar !== null || esIPhone);
+
+/* si el aviso llega mientras mirás Negocio, el botón aparece solo */
+const refrescarSiEstaEnNegocio = () => { if (vistaActual === "negocio") pintarNegocio(); };
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  pedidoInstalar = e;
+  refrescarSiEstaEnNegocio();
+});
+window.addEventListener("appinstalled", () => {
+  pedidoInstalar = null;
+  refrescarSiEstaEnNegocio();
+});
+
+async function instalarApp(){
+  if (pedidoInstalar){
+    pedidoInstalar.prompt();
+    const r = await pedidoInstalar.userChoice;
+    pedidoInstalar = null;
+    if (r.outcome === "accepted") refrescarSiEstaEnNegocio();
+    return;
+  }
+  const pasos = $("#pasos-iphone");
+  if (pasos) pasos.hidden = !pasos.hidden;
+}
+
+/* El trabajador de servicio es lo que hace que el teléfono lo
+   considere una app. Es el mismo del sitio. */
+if ("serviceWorker" in navigator){
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 
 /* =========================================================
    El vaso dibujado
@@ -736,6 +801,40 @@ function formularioCategoria(c){
 /* =========================================================
    Negocio y horario
    ========================================================= */
+/* La tarjeta de "guardar como app", al final de Negocio.
+   Si no hay nada que instalar, no aparece. */
+function bloqueApp(){
+  const titulo = '<div class="encabezado-lista"><h2>La app</h2></div>';
+
+  if (yaEsApp) return titulo +
+    '<div class="caja"><p class="ya-guardada">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" ' +
+      'stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' +
+      'Ya estás usando el panel como app.</p></div>';
+
+  if (!sePuedeInstalar()) return "";
+
+  return titulo +
+    '<div class="caja">' +
+      '<p class="ayuda" style="margin:0 0 13px">Guardá el panel en la pantalla de inicio del teléfono. ' +
+      'Se abre como una app, sin la barra del navegador, y no tenés que buscar la dirección cada vez.</p>' +
+      '<button class="boton instalar" id="btn-instalar">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+        'stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5"/>' +
+        '<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>' +
+        'Guardar el panel en el teléfono</button>' +
+      '<div class="pasos-iphone" id="pasos-iphone"' + (esIPhone ? '' : ' hidden') + '>' +
+        'En iPhone se guarda a mano: tocá ' +
+        '<span class="compartir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M12 15V3m0 0L8 7m4-4 4 4"/>' +
+        '<path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg></span> ' +
+        '<b>Compartir</b> abajo en Safari y elegí <b>Añadir a pantalla de inicio</b>.' +
+      '</div>' +
+    '</div>';
+}
+
 function pintarNegocio(){
   const n = D.negocio, h = D.horario;
   $("#vista").innerHTML =
@@ -758,7 +857,8 @@ function pintarNegocio(){
         '</div>'
       ).join("") +
       '<p class="ayuda" style="margin:10px 0 0;font-size:.85rem">El sitio muestra solo «abierto» o «cerrado» según esta tabla. Los pedidos se pueden mandar igual a toda hora.</p>' +
-    '</div>';
+    '</div>' +
+    bloqueApp();
 
   const enlazar = (sel, campo) => {
     const el = $(sel);
@@ -805,6 +905,8 @@ $("#velo").addEventListener("click", cerrarModal);
    ========================================================= */
 document.addEventListener("click", e => {
   if (e.target.closest("[data-cerrar]")) return cerrarModal();
+
+  if (e.target.closest("#btn-instalar")) return instalarApp();
 
   if (e.target.closest("[data-recargar]")) return pintarPedidos();
 
