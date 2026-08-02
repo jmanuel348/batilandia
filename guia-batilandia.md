@@ -131,7 +131,7 @@ Para la contraseña: que sea larga y que no la uses en otro lado. Tres o cuatro 
 
 ### Paso 5. Entrar
 
-1. Abrí `batilandia.josemanuelleivadiaz4.workers.dev/admin.html` — cuando conectés el dominio, también va a funcionar en `batilandia.net/admin.html`
+1. Abrí `batilandia.josemanuelleivadiaz4.workers.dev/admin` — cuando conectés el dominio, también va a funcionar en `batilandia.net/admin`
 2. Escribí tu contraseña
 3. **Entrar**
 

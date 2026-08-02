@@ -53,6 +53,15 @@ input[type=text],input[type=number],input[type=password],input[type=time],textar
   background:#fff;font-family:inherit;font-size:1rem;color:var(--tinta);resize:vertical;
 }
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--oro)}
+/* botón para vaciar el campo que el navegador rellena solo */
+label.campo.con-borrar{position:relative}
+label.campo.con-borrar input{padding-right:42px}
+#borrar-clave{
+  position:absolute;right:6px;bottom:6px;width:32px;height:32px;border-radius:50%;
+  display:grid;place-items:center;color:var(--tinta-suave);font-size:.95rem;
+}
+#borrar-clave:hover{background:var(--rosa-suave);color:var(--vino)}
+
 .marca-check{display:flex;align-items:center;gap:9px;margin-bottom:12px;font-size:.96rem}
 .marca-check input{width:20px;height:20px;accent-color:var(--vino)}
 
@@ -214,11 +223,14 @@ input[type=file]{display:none}
     <h2>Entrar al panel</h2>
     <p class="ayuda">Escribí tu clave. Queda guardada en este teléfono, así la próxima vez entra sola.</p>
     <div id="msg-entrar"></div>
-    <label class="campo">
+    <label class="campo con-borrar">
       <span>Clave</span>
       <input type="password" id="in-clave" placeholder="La que creaste en Cloudflare"
              autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="current-password">
+      <button type="button" id="borrar-clave" aria-label="Borrar lo escrito">✕</button>
     </label>
+    <p class="ayuda" style="margin:-6px 0 14px">Si el campo aparece lleno solo, es tu navegador poniendo una
+    contraseña vieja. Tocá la <b>✕</b> para vaciarlo y escribí la tuya.</p>
     <button class="boton" id="btn-entrar">Entrar</button>
   </section>
 
@@ -439,6 +451,13 @@ async function entrar(clave){
   $("#salir").hidden = false;
   seleccionarPestana("pedidos");
 }
+
+$("#borrar-clave").addEventListener("click", () => {
+  const c = $("#in-clave");
+  c.value = "";
+  c.focus();
+  mensaje("#msg-entrar","","");
+});
 
 $("#btn-entrar").addEventListener("click", async () => {
   const clave = $("#in-clave").value;
