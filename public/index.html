@@ -123,29 +123,33 @@ a{color:inherit}
 .flecha-car.der{right:-8px}
 .flecha-car[disabled]{opacity:0;pointer-events:none}
 @media (hover:hover){.carrusel-caja:hover .flecha-car{display:grid}}
+/* La foto es la protagonista: llena la tarjeta de borde a borde,
+   en vertical, y el resto va abajo. */
 .carta{
-  position:relative;flex:0 0 143px;scroll-snap-align:start;
-  background:#fff;border-radius:18px;padding:9px;
+  position:relative;flex:0 0 min(235px,66vw);scroll-snap-align:start;
+  background:#fff;border-radius:18px;padding:0 0 12px;overflow:hidden;
   box-shadow:0 3px 11px rgba(124,12,23,.08);
   display:flex;flex-direction:column;gap:7px;
 }
 .carta.sin-stock{opacity:.55}
 .carta-foto{
-  display:block;width:100%;aspect-ratio:1;border-radius:13px;overflow:hidden;
-  background:var(--rosa-suave);box-shadow:0 0 0 2px rgba(228,176,74,.42);
+  display:block;width:100%;aspect-ratio:4/5;overflow:hidden;
+  background:var(--rosa-suave);
 }
 .carta-foto img{width:100%;height:100%;object-fit:cover}
-.carta-foto svg{width:100%;height:100%;padding:12px}
+.carta-foto svg{width:100%;height:100%;padding:30px}
 .carta-nombre{
-  font-size:.88rem;line-height:1.25;min-height:2.5em;
+  font-size:.98rem;line-height:1.25;min-height:2.5em;font-weight:500;
   overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  margin:2px 13px 0;
 }
-.carta-desc{font-size:.76rem;font-weight:300;color:var(--tinta-suave);line-height:1.3;
-  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-top:-3px}
-.carta-precio{font-weight:600;color:var(--vino);font-size:.98rem;font-variant-numeric:tabular-nums;margin-top:auto}
-.carta-sellos{position:absolute;top:15px;left:15px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
-.carta .mas{width:100%;height:34px;border-radius:999px}
-.carta .paso-cant{width:100%;justify-content:space-between}
+.carta-desc{font-size:.8rem;font-weight:300;color:var(--tinta-suave);line-height:1.35;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  margin:-3px 13px 0}
+.carta-precio{font-weight:600;color:var(--vino);font-size:1.05rem;font-variant-numeric:tabular-nums;margin:auto 13px 0}
+.carta-sellos{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.carta .mas{width:calc(100% - 26px);margin:0 13px;height:36px;border-radius:999px}
+.carta .paso-cant{width:calc(100% - 26px);margin:0 13px;justify-content:space-between}
 .cinta::before,.cinta::after{content:"";position:absolute;top:8px;width:18px;height:calc(100% - 16px);background:var(--vino-osc)}
 .cinta::before{left:-14px;clip-path:polygon(100% 0,100% 100%,0 78%,0 22%)}
 .cinta::after{right:-14px;clip-path:polygon(0 0,0 100%,100% 78%,100% 22%)}
