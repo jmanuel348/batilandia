@@ -39,6 +39,10 @@ img{display:block;max-width:100%}
 }
 .tope h1{font-family:"Yellowtail",cursive;font-size:1.6rem;margin:0;font-weight:400}
 .tope .salir{font-size:.85rem;background:rgba(255,255,255,.16);padding:7px 14px;border-radius:999px}
+.tope .tope-botones{display:flex;align-items:center;gap:8px}
+/* La casita: vuelve al sitio que ve el cliente */
+.tope .casita{display:inline-flex;align-items:center;color:#fff;padding:7px 12px}
+.tope .casita svg{width:18px;height:18px}
 
 .envoltura{max-width:680px;margin:0 auto;padding:18px}
 .caja{background:#fff;border:2px solid var(--linea);border-radius:18px;padding:20px;margin-bottom:16px}
@@ -227,7 +231,12 @@ input[type=file]{display:none}
 
 <header class="tope">
   <h1>Panel de Batilandia</h1>
-  <button class="salir" id="salir" hidden>Salir</button>
+  <span class="tope-botones">
+    <a class="salir casita" href="./" aria-label="Ver el sitio" title="Ver el sitio como lo ve el cliente">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
+    </a>
+    <button class="salir" id="salir" hidden>Salir</button>
+  </span>
 </header>
 
 <div class="envoltura">
