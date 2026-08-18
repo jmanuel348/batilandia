@@ -193,6 +193,9 @@ label.campo.con-borrar input{padding-right:42px}
 .previo .cuadro img{width:100%;height:100%;object-fit:cover}
 .previo .lado{flex:1;display:grid;gap:6px}
 .previo .lado button{font-size:.86rem;padding:9px 12px;border-radius:10px;background:var(--rosa-suave);color:var(--vino);font-weight:500}
+/* El logo del banco es apaisado: caja más ancha y sin recorte */
+.previo .cuadro.ancho{width:120px;flex:0 0 120px}
+.previo .cuadro.ancho img{object-fit:contain;background:#fff}
 input[type=file]{display:none}
 
 .mensaje{padding:11px 14px;border-radius:12px;font-size:.9rem;font-weight:300;margin-bottom:14px}
@@ -900,7 +903,18 @@ function pintarNegocio(){
       '<label class="campo"><span>Página de Facebook</span><input type="text" id="n-fb" value="'+escapar(n.facebook)+'" placeholder="https://facebook.com/…"></label>' +
       '<label class="campo"><span>Datos para transferencia</span>' +
         '<textarea id="n-banco" rows="3" placeholder="BAC 1234567890&#10;A nombre de: …">'+escapar(n.banco||"")+'</textarea></label>' +
-      '<p class="ayuda" style="margin:-6px 0 13px">Esto le aparece al cliente solo si elige pagar por transferencia. Si lo dejás vacío, no se muestra nada.</p>' +
+      '<p class="ayuda" style="margin:-6px 0 13px">Esto le aparece al cliente solo si elige pagar por transferencia. Si lo dejás vacío, no se muestra nada. El número de cuenta sale grande y resaltado solo.</p>' +
+      '<div id="msg-negocio"></div>' +
+      '<label class="campo" style="margin-bottom:6px"><span>Logo del banco</span></label>' +
+      '<div class="previo">' +
+        '<span class="cuadro ancho" id="previo-logo">'+(n.bancoLogo?'<img src="'+escapar(n.bancoLogo)+'" alt="">':'🏦')+'</span>' +
+        '<span class="lado">' +
+          '<button type="button" id="btn-logo">Elegir imagen</button>' +
+          '<button type="button" id="btn-sinlogo">Quitar</button>' +
+        '</span>' +
+      '</div>' +
+      '<input type="file" id="archivo-logo" accept="image/*">' +
+      '<p class="ayuda" style="margin:-4px 0 13px">Sale chiquito junto a los datos de transferencia, para que el cliente reconozca el banco de una.</p>' +
       '<label class="marca-check"><input type="checkbox" id="n-entrega"'+(n.pedirDireccion?" checked":"")+'> Pedir dirección de entrega en el pedido</label>' +
     '</div>' +
     '<div class="encabezado-lista"><h2>Horario</h2></div>' +
@@ -926,6 +940,29 @@ function pintarNegocio(){
   enlazar("#n-nombre","nombre"); enlazar("#n-lema","lema"); enlazar("#n-wa","whatsapp");
   enlazar("#n-dir","direccion"); enlazar("#n-fb","facebook"); enlazar("#n-banco","banco");
   $("#n-entrega").addEventListener("change", e => { D.negocio.pedirDireccion = e.target.checked; marcarSucio(); });
+
+  /* --- logo del banco --- */
+  $("#btn-logo").addEventListener("click", () => $("#archivo-logo").click());
+  $("#btn-sinlogo").addEventListener("click", () => {
+    D.negocio.bancoLogo = "";
+    $("#previo-logo").innerHTML = "🏦";
+    marcarSucio();
+  });
+  $("#archivo-logo").addEventListener("change", async e => {
+    const a = e.target.files[0];
+    if (!a) return;
+    e.target.value = "";
+    mensaje("#msg-negocio","Subiendo el logo…","trabajando");
+    try {
+      const ruta = await subirFoto(a, "logo-banco");
+      D.negocio.bancoLogo = ruta;
+      $("#previo-logo").innerHTML = '<img src="'+escapar(ruta)+'" alt="">';
+      mensaje("#msg-negocio","","");
+      marcarSucio();
+    } catch(err){
+      mensaje("#msg-negocio", err.message, "error");
+    }
+  });
 
   document.querySelectorAll(".d-abierto").forEach(el => el.addEventListener("change", e => {
     const i = +e.target.dataset.i;

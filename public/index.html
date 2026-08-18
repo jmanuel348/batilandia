@@ -313,8 +313,18 @@ body.con-pedido .pie{padding-bottom:156px}
   background:var(--vino);color:#fff;box-shadow:none;font-weight:500;
 }
 .datos-banco{
-  margin:10px 0 0;background:#FBE9D6;color:#8A5A22;border-radius:12px;
-  padding:10px 13px;font-size:.86rem;font-weight:300;line-height:1.5;white-space:pre-line;
+  margin:10px 0 0;background:#FBE9D6;color:#8A5A22;border-radius:14px;
+  padding:14px 16px;font-size:.98rem;font-weight:400;line-height:1.55;
+  display:flex;align-items:center;gap:14px;
+}
+.datos-banco img{
+  height:42px;max-width:120px;object-fit:contain;border-radius:8px;
+  background:#fff;padding:3px 6px;flex:none;
+}
+.datos-banco .cuenta-etiqueta{display:block}
+.datos-banco .cuenta-num{
+  display:block;font-size:1.5rem;font-weight:600;letter-spacing:.06em;
+  color:#6B4014;line-height:1.35;word-break:break-all;
 }
 .enviar{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;background:#1FA855;color:#fff;padding:15px;border-radius:14px;font-size:1.05rem;font-weight:500;text-decoration:none;margin-top:6px}
 .enviar:hover{background:#188A45}
@@ -1319,7 +1329,30 @@ $("#pagos").addEventListener("click", e => {
   const caja = $("#datos-banco");
   const banco = (D.negocio && D.negocio.banco || "").trim();
   caja.hidden = !(formaPago === "transferencia" && banco);
-  caja.textContent = banco;
+  caja.textContent = "";
+  if (!caja.hidden){
+    /* el logo del banco, si el panel subió uno */
+    const logo = (D.negocio.bancoLogo || "").trim();
+    if (logo){
+      const img = document.createElement("img");
+      img.src = logo; img.alt = "";
+      img.addEventListener("error", () => img.remove());
+      caja.appendChild(img);
+    }
+    /* cada línea aparte; si es un número de cuenta, sale grande */
+    const lineas = document.createElement("span");
+    banco.split("\n").forEach(linea => {
+      const l = linea.trim();
+      if (!l) return;
+      const soloDigitos = l.replace(/[\s.\-]/g, "");
+      const esCuenta = soloDigitos.length >= 6 && /^\d+$/.test(soloDigitos);
+      const el = document.createElement(esCuenta ? "b" : "span");
+      el.className = esCuenta ? "cuenta-num" : "cuenta-etiqueta";
+      el.textContent = l;
+      lineas.appendChild(el);
+    });
+    caja.appendChild(lineas);
+  }
   $("#enviar").href = enlaceWhatsApp();
 });
 
