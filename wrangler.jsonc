@@ -8,9 +8,12 @@
 
   // La carpeta del sitio. El "binding" deja que el servidor
   // la sirva; sin eso, el sitio no cargaría.
+  // "run_worker_first": el menú y las fotos pasan primero por el
+  // servidor, que los sirve desde la base; el resto va directo.
   "assets": {
     "directory": "./public",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "run_worker_first": ["/datos.json", "/fotos/*"]
   },
 
   // ────────────────────────────────────────────────────────
@@ -20,13 +23,13 @@
   // Para prenderla: creá la base en Cloudflare (la guía tiene
   // el paso a paso), pegá el id abajo y sacá las barras //.
   // ────────────────────────────────────────────────────────
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "batilandia-pedidos",
-  //     "database_id": "PEGAR-ACA-EL-ID-QUE-DA-CLOUDFLARE"
-  //   }
-  // ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "batilandia-pedidos",
+      "database_id": "118b7418-29b3-4ef3-bb0c-9cc8a70ec35a"
+    }
+  ],
 
   "observability": {
     "enabled": true

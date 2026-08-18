@@ -2,10 +2,13 @@
    BATILANDIA — servidor
    Hace dos cosas:
      1. Sirve el sitio (la carpeta public).
-     2. Guarda los pedidos y calcula cuáles se venden más.
+     2. Guarda el menú, las fotos y los pedidos en la base.
 
-   El menú sigue viviendo en datos.json y se edita desde el
-   panel. Acá solo viven los pedidos.
+   Antes el menú se guardaba en GitHub y Cloudflare republicaba
+   el sitio. Desde agosto de 2026 todo vive en la base de
+   Cloudflare: el datos.json de la carpeta public queda solo
+   como copia de arranque, para cuando el panel todavía no
+   guardó nada.
    ========================================================= */
 
 const CABECERAS = { "content-type": "application/json; charset=utf-8" };
@@ -30,74 +33,20 @@ const PAGINA = 80;
 
 const DIA = 24 * 60 * 60 * 1000;
 
-/* Carpeta del repositorio donde vive el sitio */
-const CARPETA = "public/";
-
 /* =========================================================
-   GitHub, desde acá y no desde el teléfono
-   El token vive como secreto en Cloudflare. Así el panel solo
-   necesita una contraseña corta, y la llave con permiso de
-   escritura nunca baja al teléfono de nadie.
+   Configuración
+   Antes hacían falta tres secretos: la clave del panel y dos
+   de GitHub. Ahora el menú y las fotos viven en la base, así
+   que con la clave del panel alcanza.
    ========================================================= */
 function faltaConfigurar(env){
   const faltan = [];
-  if (!env.CLAVE_PANEL)  faltan.push("CLAVE_PANEL");
-  if (!env.GITHUB_TOKEN) faltan.push("GITHUB_TOKEN");
-  if (!env.GITHUB_REPO)  faltan.push("GITHUB_REPO");
+  if (!env.CLAVE_PANEL) faltan.push("CLAVE_PANEL");
   return faltan;
 }
 
-async function github(env, ruta, opciones){
-  /* Al pegar en Cloudflare es fácil que se cuele un espacio o un salto
-     de línea al final. GitHub lo rechaza como si el token fuera falso. */
-  const token = String(env.GITHUB_TOKEN || "").trim();
-  const repo = String(env.GITHUB_REPO || "").trim()
-    .replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/^\/+|\/+$/g, "");
-
-  const url = "https://api.github.com/repos/" + repo + "/contents/" + ruta;
-  const r = await fetch(url, Object.assign({}, opciones, {
-    headers: Object.assign({
-      "Authorization": "Bearer " + token,
-      "Accept": "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "batilandia"
-    }, (opciones && opciones.headers) || {})
-  }));
-  if (!r.ok){
-    let detalle = "";
-    try { detalle = (await r.json()).message || ""; } catch(e){}
-    if (r.status === 401) throw new Error(
-      "GitHub rechaza la llave. Suele ser que GITHUB_TOKEN quedó cortada al pegarla, " +
-      "o que ya venció. Generá una nueva y reemplazá el secreto en Cloudflare.");
-    if (r.status === 403) throw new Error(
-      "La llave de GitHub no tiene permiso de escritura sobre el repositorio. " +
-      "Al generarla hay que darle Contents: Read and write.");
-    if (r.status === 404) throw new Error(
-      "No se encontró «" + repo + "». Puede ser que GITHUB_REPO esté mal escrito, " +
-      "o que la llave no tenga acceso a ese repositorio.");
-    throw new Error("GitHub respondió " + r.status + (detalle ? ": " + detalle : ""));
-  }
-  return r.json();
-}
-
-/* En tandas: con un solo spread, un archivo grande revienta la pila */
-function aBase64(txt){
-  const bytes = new TextEncoder().encode(txt);
-  let s = "";
-  for (let i = 0; i < bytes.length; i += 0x8000)
-    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return btoa(s);
-}
-const deBase64 = b64 => new TextDecoder().decode(
-  Uint8Array.from(atob(String(b64).replace(/\s/g, "")), c => c.charCodeAt(0)));
-
-async function escribirEnGitHub(env, ruta, base64, mensaje){
-  let sha = null;
-  try { sha = (await github(env, ruta + "?t=" + Date.now())).sha; } catch(e){ /* no existe: se crea */ }
-  const cuerpo = { message: mensaje, content: base64 };
-  if (sha) cuerpo.sha = sha;
-  return github(env, ruta, { method:"PUT", body: JSON.stringify(cuerpo) });
-}
+/* La foto viaja como base64; para servirla hay que volverla bytes */
+const aBytes = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 
 /* =========================================================
    Base de datos
@@ -131,6 +80,16 @@ async function asegurarTablas(db){
       cantidad INTEGER NOT NULL,
       creado   INTEGER NOT NULL
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS contenido (
+      clave       TEXT PRIMARY KEY,
+      valor       TEXT NOT NULL,
+      actualizado INTEGER NOT NULL
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS fotos (
+      ruta   TEXT PRIMARY KEY,
+      imagen TEXT NOT NULL,
+      creado INTEGER NOT NULL
+    )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS i_pedidos_creado ON pedidos(creado)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS i_pedidos_estado ON pedidos(estado)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS i_lineas_creado  ON lineas(creado)`)
@@ -156,13 +115,47 @@ function codigoNuevo(){
    Utilidades
    ========================================================= */
 
-/* Lee el menú publicado. Sirve para no creerle los precios al
+/* El menú que guardó el panel, como texto JSON. Null si todavía no
+   guardó ninguno: entonces vale el datos.json que viene con el sitio.
+   Si la base falla, también null — el sitio nunca se queda en blanco. */
+async function menuGuardado(env){
+  if (!env.DB) return null;
+  try {
+    await asegurarTablas(env.DB);
+    const fila = await env.DB.prepare(`SELECT valor FROM contenido WHERE clave = 'menu'`).first();
+    return fila ? fila.valor : null;
+  } catch(e){ return null; }
+}
+
+/* Lee el menú vigente. Sirve para no creerle los precios al
    navegador: el total siempre se recalcula acá. */
 async function leerMenu(env, url){
+  const guardado = await menuGuardado(env);
+  if (guardado){
+    try { return JSON.parse(guardado); } catch(e){ /* roto: vale el respaldo */ }
+  }
   try {
     const r = await env.ASSETS.fetch(new Request(new URL("/datos.json", url.origin)));
     if (!r.ok) return null;
     return await r.json();
+  } catch(e){ return null; }
+}
+
+/* Una foto guardada desde el panel, lista para mandar al navegador.
+   El nombre es único (lleva la fecha), así que puede quedarse
+   guardada en el teléfono para siempre. */
+async function buscarFoto(env, ruta){
+  if (!env.DB) return null;
+  try {
+    await asegurarTablas(env.DB);
+    const fila = await env.DB.prepare(`SELECT imagen FROM fotos WHERE ruta = ?`).bind(ruta).first();
+    if (!fila) return null;
+    return new Response(aBytes(fila.imagen), {
+      headers: {
+        "content-type": "image/jpeg",
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    });
   } catch(e){ return null; }
 }
 
@@ -207,8 +200,22 @@ export default {
   async fetch(request, env, ctx){
     const url = new URL(request.url);
 
-    /* Todo lo que no sea /api/ es el sitio de siempre */
+    /* Todo lo que no sea /api/ es el sitio de siempre, salvo dos
+       cosas que ahora viven en la base: el menú y las fotos. */
     if (!url.pathname.startsWith("/api/")){
+      const lectura = request.method === "GET" || request.method === "HEAD";
+      if (lectura && url.pathname === "/datos.json"){
+        const guardado = await menuGuardado(env);
+        if (guardado) return new Response(guardado, {
+          headers: Object.assign({ "cache-control": "no-cache" }, CABECERAS)
+        });
+        /* nada guardado todavía: sigue el datos.json del sitio */
+      }
+      if (lectura && url.pathname.startsWith("/fotos/")){
+        const foto = await buscarFoto(env, url.pathname.slice(1));
+        if (foto) return foto;
+        /* no está en la base: por si era una foto vieja del sitio */
+      }
       return env.ASSETS ? env.ASSETS.fetch(request) : new Response("No encontrado", { status:404 });
     }
 
@@ -266,13 +273,18 @@ function revisarPedidos(request, env){
 async function leerContenido(request, env){
   const mal = revisarPanel(request, env);
   if (mal) return mal;
-  const j = await github(env, CARPETA + "datos.json?t=" + Date.now());
-  return responder({ datos: JSON.parse(deBase64(j.content)) });
+  const guardado = await menuGuardado(env);
+  if (guardado) return responder({ datos: JSON.parse(guardado) });
+  /* El panel todavía no guardó nada: vale la copia que trae el sitio */
+  const r = await env.ASSETS.fetch(new Request(new URL("/datos.json", request.url)));
+  if (!r.ok) return problema("No se pudo leer el menú.", 503);
+  return responder({ datos: await r.json() });
 }
 
 async function guardarContenido(request, env){
   const mal = revisarPanel(request, env);
   if (mal) return mal;
+  if (!env.DB) return problema("Todavía no está creada la base de datos; no hay dónde guardar el menú.", 503);
 
   let cuerpo;
   try { cuerpo = await request.json(); }
@@ -282,8 +294,11 @@ async function guardarContenido(request, env){
   if (!d || !Array.isArray(d.productos) || !Array.isArray(d.categorias) || !d.negocio)
     return problema("Ese contenido no tiene la forma de un menú.");
 
-  await escribirEnGitHub(env, CARPETA + "datos.json",
-    aBase64(JSON.stringify(d, null, 2)), "Actualización desde el panel");
+  await asegurarTablas(env.DB);
+  await env.DB.prepare(
+    `INSERT INTO contenido (clave, valor, actualizado) VALUES ('menu', ?, ?)
+     ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado = excluded.actualizado`
+  ).bind(JSON.stringify(d), Date.now()).run();
   return responder({ ok: true });
 }
 
@@ -293,16 +308,21 @@ const resbalar = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/
 async function subirFoto(request, env){
   const mal = revisarPanel(request, env);
   if (mal) return mal;
+  if (!env.DB) return problema("Todavía no está creada la base de datos; no hay dónde guardar la foto.", 503);
 
   let cuerpo;
   try { cuerpo = await request.json(); }
   catch(e){ return problema("La foto llegó mal armada."); }
   const b64 = String(cuerpo.base64 || "").replace(/\s/g, "");
   if (!b64 || !/^[A-Za-z0-9+/=]+$/.test(b64)) return problema("Eso no parece una foto.");
-  if (b64.length > 8 * 1024 * 1024) return problema("La foto pesa demasiado.");
+  /* El panel las achica antes de mandar; este tope es por si acaso,
+     y además una fila de la base no puede pasar de 2 MB. */
+  if (b64.length > 1500 * 1024) return problema("La foto pesa demasiado.");
 
+  await asegurarTablas(env.DB);
   const ruta = "fotos/" + resbalar(String(cuerpo.nombre || "")) + "-" + Date.now().toString(36) + ".jpg";
-  await escribirEnGitHub(env, CARPETA + ruta, b64, "Foto: " + String(cuerpo.nombre || "").slice(0, 60));
+  await env.DB.prepare(`INSERT INTO fotos (ruta, imagen, creado) VALUES (?, ?, ?)`)
+    .bind(ruta, b64, Date.now()).run();
   return responder({ ruta: ruta });
 }
 

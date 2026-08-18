@@ -257,8 +257,8 @@ input[type=file]{display:none}
 <script>
 /* =========================================================
    PANEL DE BATILANDIA
-   Guarda el contenido en datos.json dentro de tu repositorio
-   de GitHub. Cloudflare republica el sitio solo.
+   Guarda el menú y las fotos en la base de Cloudflare.
+   Los cambios se ven en el sitio al instante.
    ========================================================= */
 
 /* --- guardado local tolerante (si el navegador lo bloquea, usa memoria) --- */
@@ -368,8 +368,8 @@ function mensaje(donde, texto, tipo){
 
 /* =========================================================
    El servidor
-   Todo pasa por acá: el menú, las fotos y los pedidos. La llave
-   de GitHub vive como secreto en Cloudflare, nunca en el teléfono.
+   Todo pasa por acá: el menú, las fotos y los pedidos.
+   Solo hace falta la clave del panel.
    ========================================================= */
 async function api(ruta, opciones){
   const r = await fetch("/api" + ruta, Object.assign({}, opciones, {

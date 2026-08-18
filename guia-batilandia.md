@@ -1,6 +1,8 @@
 # Guía de Batilandia — publicar y administrar
 
-> **Estado:** el sitio ya está en línea en `batilandia.josemanuelleivadiaz4.workers.dev` y el panel funciona. Falta comprar el dominio (Parte 3) y cargar el contenido real: horario, dirección, Facebook, descripciones y fotos.
+> **Estado (agosto 2026):** el sitio vive en **`batilandia.atilandia.workers.dev`**, en la cuenta de Cloudflare del negocio (`yoelnegocionic@gmail.com`). La base de pedidos ya está encendida y el panel funciona completo. Falta comprar el dominio (Parte 3) y cargar el contenido real: horario, dirección, Facebook, descripciones y fotos.
+
+> **⚠️ Cambio grande de agosto 2026 — GitHub ya no hace falta.** Antes el panel guardaba el menú y las fotos en GitHub y Cloudflare republicaba el sitio; por eso la guía habla de tokens de GitHub (Partes 4 y 5). Eso ya no corre: ahora **todo se guarda en la base de Cloudflare** y los cambios del panel se ven al instante. El único secreto que existe es `CLAVE_PANEL`. El repositorio de GitHub quedó solo como copia de respaldo del código. Las partes de esta guía que mencionan tokens o "Cloudflare republica solo" quedaron viejas: si algo de eso no coincide con lo que ves, es por esto. Para publicar cambios de código (no de menú) se usa `npx wrangler deploy` desde la carpeta del proyecto.
 
 ## Cómo queda organizado el repositorio
 
