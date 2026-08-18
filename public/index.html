@@ -319,6 +319,10 @@ body.con-pedido .pie{padding-bottom:156px}
 .enviar:hover{background:#188A45}
 .nota-hoja{text-align:center;font-size:.82rem;font-weight:300;color:var(--tinta-suave);margin:10px 0 0}
 .cerrar{position:absolute;right:16px;top:14px;width:32px;height:32px;border-radius:50%;background:var(--rosa-suave);color:var(--vino);display:grid;place-items:center;font-size:1.1rem}
+.aviso-respaldo{
+  margin:14px 16px 0;background:#FBE9D6;color:#8A5A22;border-radius:12px;
+  padding:10px 13px;font-size:.86rem;font-weight:300;line-height:1.5;text-align:center;
+}
 
 :focus-visible{outline:3px solid var(--oro);outline-offset:2px;border-radius:6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
@@ -1368,7 +1372,12 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") abrir(false)
 $("#enviar").addEventListener("click", () => {
   registrarPedido();
   codigoPedido = "";               // el próximo pedido lleva otro código
-  setTimeout(() => abrir(false), 400);
+  /* El pedido ya salió: se vacía el carrito para que otro toque en
+     «Enviar» no anote un pedido repetido en el panel. El repintado
+     espera al cierre de la hoja, porque tocaría el enlace que el
+     navegador todavía está abriendo. */
+  Object.keys(carrito).forEach(id => delete carrito[id]);
+  setTimeout(() => { abrir(false); refrescar(); }, 400);
 });
 
 /* =========================================================
@@ -1429,10 +1438,26 @@ function iniciar(){
     .catch(() => {});
 }
 
-fetch("datos.json?v=" + Date.now())
+/* Si el menú al día no carga, se usa la copia de adentro, pero
+   avisando: sus precios pueden haber quedado viejos. */
+function avisarRespaldo(){
+  const aviso = document.createElement("p");
+  aviso.className = "aviso-respaldo";
+  aviso.textContent = "No se pudo cargar el menú al día y este es el último guardado. Cualquier precio lo confirmamos por WhatsApp.";
+  const menu = $("#menu");
+  menu.parentNode.insertBefore(aviso, menu);
+}
+
+/* «no-cache» revalida contra el servidor sin inventar una dirección
+   nueva por visita, que llenaba el caché del teléfono de copias. */
+fetch("datos.json", { cache: "no-cache" })
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(d => { D = d; iniciar(); })
-  .catch(() => { console.warn("No se pudo leer datos.json; se usa la copia de respaldo."); iniciar(); });
+  .catch(() => {
+    console.warn("No se pudo leer datos.json; se usa la copia de respaldo.");
+    avisarRespaldo();
+    iniciar();
+  });
 </script>
 </body>
 </html>

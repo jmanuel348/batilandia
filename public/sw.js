@@ -7,7 +7,8 @@
    Nunca guarda los pedidos: esos van derecho a la red.
    ========================================================= */
 
-const CACHE = "batilandia-v1";
+/* Subir el número limpia el caché viejo en todos los teléfonos */
+const CACHE = "batilandia-v2";
 
 /* Lo mínimo para que el sitio abra sin señal */
 const BASICOS = [
@@ -56,6 +57,7 @@ self.addEventListener("fetch", e => {
         }
         return r;
       })
-      .catch(() => caches.match(e.request).then(r => r || caches.match("./index.html")))
+      /* ignoreSearch: «datos.json?v=123» y «datos.json» son lo mismo */
+      .catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match("./index.html")))
   );
 });
